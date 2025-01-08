@@ -1,0 +1,34 @@
+# Build
+build/
+*.o
+*.d
+*.elf
+*.bin
+*.hex
+*.map
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Test artifacts
+*.log
+*.gcno
+*.gcda
+*.gcov
+
+# Config overrides
+config/local.json
