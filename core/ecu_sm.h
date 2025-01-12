@@ -10,7 +10,10 @@ typedef enum {
     ECU_STATE_SPINUP,
     ECU_STATE_IGNITION,
     ECU_STATE_RUN,
+    ECU_STATE_FAULT,
 } ecu_state_t;
+
+#define ECU_STATE_COUNT 6
 
 /* Transition result */
 typedef enum {

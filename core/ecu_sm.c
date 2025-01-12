@@ -7,8 +7,12 @@ static const struct {
 } valid_transitions[] = {
     { ECU_STATE_OFF,       ECU_STATE_PRESTART },
     { ECU_STATE_PRESTART,  ECU_STATE_SPINUP   },
+    { ECU_STATE_PRESTART,  ECU_STATE_FAULT    },
     { ECU_STATE_SPINUP,    ECU_STATE_IGNITION },
+    { ECU_STATE_SPINUP,    ECU_STATE_FAULT    },
     { ECU_STATE_IGNITION,  ECU_STATE_RUN      },
+    { ECU_STATE_IGNITION,  ECU_STATE_FAULT    },
+    { ECU_STATE_RUN,       ECU_STATE_FAULT    },
 };
 
 static const int num_transitions = sizeof(valid_transitions) / sizeof(valid_transitions[0]);
@@ -49,12 +53,13 @@ static const char *state_names[] = {
     "SPINUP",
     "IGNITION",
     "RUN",
+    "FAULT",
 };
 
 const char *ecu_sm_state_name(ecu_state_t state)
 {
-    if (state <= ECU_STATE_RUN) {
-        return state_names[state];
+    if ((int)state < ECU_STATE_COUNT) {
+        return state_names[(int)state];
     }
     return "UNKNOWN";
 }
