@@ -18,9 +18,12 @@ enable_testing()
 
 add_executable(test_sm test/test_sm.c)
 target_link_libraries(test_sm ecu_core)
+target_include_directories(test_sm PRIVATE ${CMAKE_SOURCE_DIR})
 add_test(NAME state_machine COMMAND test_sm)
 
 # Default build type
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
+
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
