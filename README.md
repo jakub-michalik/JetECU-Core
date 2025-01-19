@@ -233,6 +233,23 @@ No dynamic memory allocation. Deterministic timing.
 
 ---
 
+## Building
+
+```bash
+mkdir build && cd build
+cmake ..
+make
+```
+
+### Running Tests
+
+```bash
+cd build
+ctest --output-on-failure
+```
+
+---
+
 ## License
 
 Apache 2.0
