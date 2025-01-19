@@ -15,7 +15,7 @@ static const struct {
     { ECU_STATE_RUN,       ECU_STATE_FAULT    },
 };
 
-static const int num_transitions = sizeof(valid_transitions) / sizeof(valid_transitions[0]);
+#define NUM_TRANSITIONS (sizeof(valid_transitions) / sizeof(valid_transitions[0]))
 
 void ecu_sm_init(ecu_sm_t *sm)
 {
@@ -29,8 +29,7 @@ sm_result_t ecu_sm_transition(ecu_sm_t *sm, ecu_state_t next, ecu_time_t now)
         return SM_NO_CHANGE;
     }
 
-    /* Check if transition is valid */
-    for (int i = 0; i < num_transitions; i++) {
+    for (size_t i = 0; i < NUM_TRANSITIONS; i++) {
         if (valid_transitions[i].from == sm->current &&
             valid_transitions[i].to == next) {
             sm->current = next;
