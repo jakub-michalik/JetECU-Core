@@ -41,10 +41,43 @@ TEST(test_sm_fault_from_spinup)
     ASSERT_EQ(ecu_sm_state(&sm), ECU_STATE_FAULT);
 }
 
+TEST(test_sm_full_sequence)
+{
+    ecu_sm_t sm;
+    ecu_sm_init(&sm);
+
+    ASSERT_EQ(ecu_sm_transition(&sm, ECU_STATE_PRESTART, 100), SM_TRANSITION);
+    ASSERT_EQ(ecu_sm_transition(&sm, ECU_STATE_SPINUP, 200), SM_TRANSITION);
+    ASSERT_EQ(ecu_sm_transition(&sm, ECU_STATE_IGNITION, 300), SM_TRANSITION);
+    ASSERT_EQ(ecu_sm_transition(&sm, ECU_STATE_RAMP, 400), SM_TRANSITION);
+    ASSERT_EQ(ecu_sm_transition(&sm, ECU_STATE_RUN, 500), SM_TRANSITION);
+    ASSERT_EQ(ecu_sm_transition(&sm, ECU_STATE_COOLDOWN, 600), SM_TRANSITION);
+    ASSERT_EQ(ecu_sm_transition(&sm, ECU_STATE_SHUTDOWN, 700), SM_TRANSITION);
+    ASSERT_EQ(ecu_sm_transition(&sm, ECU_STATE_OFF, 800), SM_TRANSITION);
+}
+
+TEST(test_sm_fault_to_shutdown)
+{
+    ecu_sm_t sm;
+    ecu_sm_init(&sm);
+
+    ecu_sm_transition(&sm, ECU_STATE_PRESTART, 100);
+    ecu_sm_transition(&sm, ECU_STATE_SPINUP, 200);
+    ecu_sm_transition(&sm, ECU_STATE_FAULT, 300);
+
+    /* FAULT -> SHUTDOWN is valid */
+    sm_result_t r = ecu_sm_transition(&sm, ECU_STATE_SHUTDOWN, 400);
+    ASSERT_EQ(r, SM_TRANSITION);
+    ASSERT_EQ(ecu_sm_state(&sm), ECU_STATE_SHUTDOWN);
+}
+
 TEST(test_sm_state_names)
 {
     ASSERT_STR_EQ(ecu_sm_state_name(ECU_STATE_OFF), "OFF");
     ASSERT_STR_EQ(ecu_sm_state_name(ECU_STATE_PRESTART), "PRESTART");
+    ASSERT_STR_EQ(ecu_sm_state_name(ECU_STATE_RAMP), "RAMP");
+    ASSERT_STR_EQ(ecu_sm_state_name(ECU_STATE_COOLDOWN), "COOLDOWN");
+    ASSERT_STR_EQ(ecu_sm_state_name(ECU_STATE_SHUTDOWN), "SHUTDOWN");
     ASSERT_STR_EQ(ecu_sm_state_name(ECU_STATE_FAULT), "FAULT");
 }
 
@@ -63,6 +96,8 @@ int main(void)
     RUN_TEST(test_sm_valid_transition);
     RUN_TEST(test_sm_invalid_transition);
     RUN_TEST(test_sm_fault_from_spinup);
+    RUN_TEST(test_sm_full_sequence);
+    RUN_TEST(test_sm_fault_to_shutdown);
     RUN_TEST(test_sm_state_names);
     RUN_TEST(test_sm_same_state_noop);
     TEST_SUMMARY();

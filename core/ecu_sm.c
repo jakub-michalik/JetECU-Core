@@ -5,14 +5,20 @@ static const struct {
     ecu_state_t from;
     ecu_state_t to;
 } valid_transitions[] = {
-    { ECU_STATE_OFF,       ECU_STATE_PRESTART },
-    { ECU_STATE_PRESTART,  ECU_STATE_SPINUP   },
-    { ECU_STATE_PRESTART,  ECU_STATE_FAULT    },
-    { ECU_STATE_SPINUP,    ECU_STATE_IGNITION },
-    { ECU_STATE_SPINUP,    ECU_STATE_FAULT    },
-    { ECU_STATE_IGNITION,  ECU_STATE_RUN      },
-    { ECU_STATE_IGNITION,  ECU_STATE_FAULT    },
-    { ECU_STATE_RUN,       ECU_STATE_FAULT    },
+    { ECU_STATE_OFF,       ECU_STATE_PRESTART  },
+    { ECU_STATE_PRESTART,  ECU_STATE_SPINUP    },
+    { ECU_STATE_PRESTART,  ECU_STATE_FAULT     },
+    { ECU_STATE_SPINUP,    ECU_STATE_IGNITION  },
+    { ECU_STATE_SPINUP,    ECU_STATE_FAULT     },
+    { ECU_STATE_IGNITION,  ECU_STATE_RAMP      },
+    { ECU_STATE_IGNITION,  ECU_STATE_FAULT     },
+    { ECU_STATE_RAMP,      ECU_STATE_RUN       },
+    { ECU_STATE_RAMP,      ECU_STATE_FAULT     },
+    { ECU_STATE_RUN,       ECU_STATE_COOLDOWN  },
+    { ECU_STATE_RUN,       ECU_STATE_FAULT     },
+    { ECU_STATE_COOLDOWN,  ECU_STATE_SHUTDOWN  },
+    { ECU_STATE_SHUTDOWN,  ECU_STATE_OFF       },
+    { ECU_STATE_FAULT,     ECU_STATE_SHUTDOWN  },
 };
 
 #define NUM_TRANSITIONS (sizeof(valid_transitions) / sizeof(valid_transitions[0]))
@@ -51,7 +57,10 @@ static const char *state_names[] = {
     "PRESTART",
     "SPINUP",
     "IGNITION",
+    "RAMP",
     "RUN",
+    "COOLDOWN",
+    "SHUTDOWN",
     "FAULT",
 };
 
