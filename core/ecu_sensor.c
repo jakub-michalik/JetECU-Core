@@ -7,6 +7,18 @@ void ecu_sensor_init(ecu_sensor_state_t *state)
     state->initialized = false;
 }
 
+static float clampf(float val, float lo, float hi)
+{
+    if (val < lo) return lo;
+    if (val > hi) return hi;
+    return val;
+}
+
+static float fabsf_local(float x)
+{
+    return x < 0.0f ? -x : x;
+}
+
 ecu_sensor_reading_t ecu_sensor_validate(
     float raw,
     const ecu_sensor_config_t *cfg,
@@ -23,15 +35,26 @@ ecu_sensor_reading_t ecu_sensor_validate(
     if (raw < cfg->range_min || raw > cfg->range_max) {
         reading.faults |= SENSOR_FAULT_RANGE;
         reading.valid = false;
-        /* clamp to range */
-        if (raw < cfg->range_min) reading.value = cfg->range_min;
-        if (raw > cfg->range_max) reading.value = cfg->range_max;
+        reading.value = clampf(raw, cfg->range_min, cfg->range_max);
     }
 
     if (!state->initialized) {
         state->last_value = reading.value;
         state->initialized = true;
         return reading;
+    }
+
+    /* Rate-of-change limiting */
+    if (cfg->rate_limit > 0.0f) {
+        float delta = reading.value - state->last_value;
+        if (fabsf_local(delta) > cfg->rate_limit) {
+            reading.faults |= SENSOR_FAULT_RATE;
+            /* clamp the change */
+            if (delta > 0.0f)
+                reading.value = state->last_value + cfg->rate_limit;
+            else
+                reading.value = state->last_value - cfg->rate_limit;
+        }
     }
 
     state->last_value = reading.value;
