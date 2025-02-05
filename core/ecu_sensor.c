@@ -49,11 +49,24 @@ ecu_sensor_reading_t ecu_sensor_validate(
         float delta = reading.value - state->last_value;
         if (fabsf_local(delta) > cfg->rate_limit) {
             reading.faults |= SENSOR_FAULT_RATE;
-            /* clamp the change */
             if (delta > 0.0f)
                 reading.value = state->last_value + cfg->rate_limit;
             else
                 reading.value = state->last_value - cfg->rate_limit;
+        }
+    }
+
+    /* Stuck-at detection */
+    if (cfg->stuck_count_limit > 0) {
+        if (fabsf_local(reading.value - state->last_value) < cfg->stuck_tolerance) {
+            state->stuck_count++;
+        } else {
+            state->stuck_count = 0;
+        }
+
+        if (state->stuck_count >= cfg->stuck_count_limit) {
+            reading.faults |= SENSOR_FAULT_STUCK;
+            reading.valid = false;
         }
     }
 
