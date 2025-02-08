@@ -1,0 +1,14 @@
+{
+    "rpm_idle": 45000,
+    "rpm_max": 120000,
+    "rpm_start_target": 60000,
+    "egt_max": 1100,
+    "egt_start_min": 150,
+    "fuel_start_pct": 8.0,
+    "fuel_max_pct": 100.0,
+    "fuel_ramp_rate": 5.0,
+    "prestart_timeout_ms": 5000,
+    "spinup_timeout_ms": 10000,
+    "ignition_timeout_ms": 8000,
+    "rpm_ramp_rate": 400
+}
