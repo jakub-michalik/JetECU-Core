@@ -40,6 +40,7 @@ ecu_sensor_reading_t ecu_sensor_validate(
 
     if (!state->initialized) {
         state->last_value = reading.value;
+        state->stuck_count = 0;
         state->initialized = true;
         return reading;
     }
@@ -56,7 +57,7 @@ ecu_sensor_reading_t ecu_sensor_validate(
         }
     }
 
-    /* Stuck-at detection */
+    /* Stuck-at detection — only after we have a previous reading */
     if (cfg->stuck_count_limit > 0) {
         if (fabsf_local(reading.value - state->last_value) < cfg->stuck_tolerance) {
             state->stuck_count++;
