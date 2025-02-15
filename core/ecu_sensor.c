@@ -74,3 +74,16 @@ ecu_sensor_reading_t ecu_sensor_validate(
     state->last_value = reading.value;
     return reading;
 }
+
+bool ecu_sensor_egt_plausible(float egt, float rpm, float rpm_idle)
+{
+    /* If RPM is near zero but EGT is high, something is wrong */
+    if (rpm < rpm_idle * 0.5f && egt > 200.0f) {
+        return false;
+    }
+    /* If RPM is high but EGT is near ambient, sensor might be disconnected */
+    if (rpm > rpm_idle && egt < 50.0f) {
+        return false;
+    }
+    return true;
+}

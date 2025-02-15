@@ -44,4 +44,7 @@ ecu_sensor_reading_t ecu_sensor_validate(
     ecu_sensor_state_t *state
 );
 
+/* Cross-check: is EGT plausible given RPM? */
+bool ecu_sensor_egt_plausible(float egt, float rpm, float rpm_idle);
+
 #endif /* ECU_SENSOR_H */
