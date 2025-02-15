@@ -19,6 +19,48 @@ static float fabsf_local(float x)
     return x < 0.0f ? -x : x;
 }
 
+/* Individual validation steps */
+static void check_range(ecu_sensor_reading_t *r, const ecu_sensor_config_t *cfg)
+{
+    if (r->value < cfg->range_min || r->value > cfg->range_max) {
+        r->faults |= SENSOR_FAULT_RANGE;
+        r->valid = false;
+        r->value = clampf(r->value, cfg->range_min, cfg->range_max);
+    }
+}
+
+static void check_rate(ecu_sensor_reading_t *r, const ecu_sensor_config_t *cfg,
+                       float last_value)
+{
+    if (cfg->rate_limit <= 0.0f) return;
+
+    float delta = r->value - last_value;
+    if (fabsf_local(delta) > cfg->rate_limit) {
+        r->faults |= SENSOR_FAULT_RATE;
+        if (delta > 0.0f)
+            r->value = last_value + cfg->rate_limit;
+        else
+            r->value = last_value - cfg->rate_limit;
+    }
+}
+
+static void check_stuck(ecu_sensor_reading_t *r, const ecu_sensor_config_t *cfg,
+                        ecu_sensor_state_t *state)
+{
+    if (cfg->stuck_count_limit <= 0) return;
+
+    if (fabsf_local(r->value - state->last_value) < cfg->stuck_tolerance) {
+        state->stuck_count++;
+    } else {
+        state->stuck_count = 0;
+    }
+
+    if (state->stuck_count >= cfg->stuck_count_limit) {
+        r->faults |= SENSOR_FAULT_STUCK;
+        r->valid = false;
+    }
+}
+
 ecu_sensor_reading_t ecu_sensor_validate(
     float raw,
     const ecu_sensor_config_t *cfg,
@@ -31,12 +73,7 @@ ecu_sensor_reading_t ecu_sensor_validate(
         .faults = SENSOR_FAULT_NONE,
     };
 
-    /* Range check */
-    if (raw < cfg->range_min || raw > cfg->range_max) {
-        reading.faults |= SENSOR_FAULT_RANGE;
-        reading.valid = false;
-        reading.value = clampf(raw, cfg->range_min, cfg->range_max);
-    }
+    check_range(&reading, cfg);
 
     if (!state->initialized) {
         state->last_value = reading.value;
@@ -45,31 +82,8 @@ ecu_sensor_reading_t ecu_sensor_validate(
         return reading;
     }
 
-    /* Rate-of-change limiting */
-    if (cfg->rate_limit > 0.0f) {
-        float delta = reading.value - state->last_value;
-        if (fabsf_local(delta) > cfg->rate_limit) {
-            reading.faults |= SENSOR_FAULT_RATE;
-            if (delta > 0.0f)
-                reading.value = state->last_value + cfg->rate_limit;
-            else
-                reading.value = state->last_value - cfg->rate_limit;
-        }
-    }
-
-    /* Stuck-at detection — only after we have a previous reading */
-    if (cfg->stuck_count_limit > 0) {
-        if (fabsf_local(reading.value - state->last_value) < cfg->stuck_tolerance) {
-            state->stuck_count++;
-        } else {
-            state->stuck_count = 0;
-        }
-
-        if (state->stuck_count >= cfg->stuck_count_limit) {
-            reading.faults |= SENSOR_FAULT_STUCK;
-            reading.valid = false;
-        }
-    }
+    check_rate(&reading, cfg, state->last_value);
+    check_stuck(&reading, cfg, state);
 
     state->last_value = reading.value;
     return reading;
@@ -77,11 +91,9 @@ ecu_sensor_reading_t ecu_sensor_validate(
 
 bool ecu_sensor_egt_plausible(float egt, float rpm, float rpm_idle)
 {
-    /* If RPM is near zero but EGT is high, something is wrong */
     if (rpm < rpm_idle * 0.5f && egt > 200.0f) {
         return false;
     }
-    /* If RPM is high but EGT is near ambient, sensor might be disconnected */
     if (rpm > rpm_idle && egt < 50.0f) {
         return false;
     }
