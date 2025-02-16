@@ -11,11 +11,11 @@ typedef struct {
 
     /* EGT limits (degC) */
     float egt_max;
-    float egt_start_min;    /* minimum EGT to confirm ignition */
+    float egt_start_min;
 
     /* Fuel */
-    float fuel_start_pct;   /* fuel % during ignition */
-    float fuel_max_pct;     /* absolute max fuel % */
+    float fuel_start_pct;
+    float fuel_max_pct;
     float fuel_ramp_rate;   /* %/sec ramp limit */
 
     /* Timeouts (ms) */
@@ -24,7 +24,7 @@ typedef struct {
     uint32_t ignition_timeout_ms;
 
     /* RPM ramp */
-    float rpm_ramp_rate;    /* RPM/sec during ramp */
+    float rpm_ramp_rate;
 } ecu_config_t;
 
 /* Get default configuration */
