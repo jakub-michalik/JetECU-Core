@@ -10,6 +10,10 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 # Core library
 add_library(ecu_core
     core/ecu_sm.c
+    core/ecu_sensor.c
+    core/ecu_config.c
+    core/ecu_json.c
+    core/ecu_config_load.c
 )
 target_include_directories(ecu_core PUBLIC ${CMAKE_SOURCE_DIR})
 
@@ -18,8 +22,15 @@ enable_testing()
 
 add_executable(test_sm test/test_sm.c)
 target_link_libraries(test_sm ecu_core)
-target_include_directories(test_sm PRIVATE ${CMAKE_SOURCE_DIR})
 add_test(NAME state_machine COMMAND test_sm)
+
+add_executable(test_sensor test/test_sensor.c)
+target_link_libraries(test_sensor ecu_core)
+add_test(NAME sensor COMMAND test_sensor)
+
+add_executable(test_config test/test_config.c)
+target_link_libraries(test_config ecu_core)
+add_test(NAME config COMMAND test_config)
 
 # Default build type
 if(NOT CMAKE_BUILD_TYPE)
