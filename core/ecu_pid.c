@@ -1,5 +1,4 @@
 #include "core/ecu_pid.h"
-#include <stdbool.h>
 
 static float clampf(float val, float lo, float hi)
 {
@@ -35,9 +34,15 @@ float ecu_pid_update(ecu_pid_t *pid, float setpoint, float measured, float dt)
     float p = pid->cfg.kp * error;
 
     pid->integral += error * dt;
-    /* clamp integral to prevent windup */
-    float i_max = pid->cfg.output_max / (pid->cfg.ki > 0.001f ? pid->cfg.ki : 1.0f);
-    pid->integral = clampf(pid->integral, -i_max, i_max);
+
+    /* Anti-windup */
+    float i_limit = pid->cfg.integral_max;
+    if (i_limit <= 0.0f) {
+        /* Auto-derive from output limits and ki */
+        float ki = pid->cfg.ki;
+        i_limit = (ki > 0.001f) ? (pid->cfg.output_max / ki) : 1000.0f;
+    }
+    pid->integral = clampf(pid->integral, -i_limit, i_limit);
     float i = pid->cfg.ki * pid->integral;
 
     float derivative = (dt > 0.0f) ? (error - pid->prev_error) / dt : 0.0f;
