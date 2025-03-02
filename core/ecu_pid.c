@@ -32,14 +32,14 @@ float ecu_pid_update(ecu_pid_t *pid, float setpoint, float measured, float dt)
         pid->initialized = true;
     }
 
-    /* Proportional */
     float p = pid->cfg.kp * error;
 
-    /* Integral */
     pid->integral += error * dt;
+    /* clamp integral to prevent windup */
+    float i_max = pid->cfg.output_max / (pid->cfg.ki > 0.001f ? pid->cfg.ki : 1.0f);
+    pid->integral = clampf(pid->integral, -i_max, i_max);
     float i = pid->cfg.ki * pid->integral;
 
-    /* Derivative */
     float derivative = (dt > 0.0f) ? (error - pid->prev_error) / dt : 0.0f;
     float d = pid->cfg.kd * derivative;
 
