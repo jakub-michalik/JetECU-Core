@@ -8,7 +8,6 @@ void ecu_init(ecu_t *ecu, const ecu_config_t *cfg)
     ecu->fault_code = 0;
     ecu->time_ms = 0;
 
-    /* RPM PID */
     ecu_pid_config_t pid_cfg = {
         .kp = 0.5f,
         .ki = 0.1f,
@@ -19,7 +18,6 @@ void ecu_init(ecu_t *ecu, const ecu_config_t *cfg)
     };
     ecu_pid_init(&ecu->rpm_pid, &pid_cfg);
 
-    /* Sensor configs */
     ecu->rpm_sensor_cfg = (ecu_sensor_config_t){
         .range_min = 0.0f,
         .range_max = cfg->rpm_max * 1.2f,
@@ -51,7 +49,6 @@ ecu_outputs_t ecu_step(ecu_t *ecu, const ecu_inputs_t *inputs, float dt)
     ecu_outputs_t out = {0};
     ecu->time_ms += (uint32_t)(dt * 1000.0f);
 
-    /* Validate sensors */
     ecu_sensor_reading_t rpm = ecu_sensor_validate(
         inputs->rpm, &ecu->rpm_sensor_cfg, &ecu->rpm_sensor);
     ecu_sensor_reading_t egt = ecu_sensor_validate(
@@ -64,7 +61,6 @@ ecu_outputs_t ecu_step(ecu_t *ecu, const ecu_inputs_t *inputs, float dt)
         out.fuel_pct = 0.0f;
         out.igniter_on = false;
         out.starter_on = false;
-        /* Transition to prestart on throttle input */
         if (inputs->throttle > 5.0f) {
             ecu_sm_transition(&ecu->sm, ECU_STATE_PRESTART, ecu->time_ms);
         }
@@ -73,14 +69,11 @@ ecu_outputs_t ecu_step(ecu_t *ecu, const ecu_inputs_t *inputs, float dt)
     case ECU_STATE_PRESTART:
         out.fuel_pct = 0.0f;
         out.starter_on = false;
-        /* Check sensor validity */
+        /* Sensor self-check: need at least one valid reading before proceeding */
         if (!rpm.valid || !egt.valid) {
-            enter_fault(ecu, 0x01);
-            break;
-        }
-        /* Timeout check */
-        if (ecu->time_ms - ecu->sm.state_enter_time > ecu->config.prestart_timeout_ms) {
-            enter_fault(ecu, 0x02);
+            if (ecu->time_ms - ecu->sm.state_enter_time > ecu->config.prestart_timeout_ms) {
+                enter_fault(ecu, 0x01);
+            }
             break;
         }
         ecu_sm_transition(&ecu->sm, ECU_STATE_SPINUP, ecu->time_ms);
@@ -104,8 +97,8 @@ ecu_outputs_t ecu_step(ecu_t *ecu, const ecu_inputs_t *inputs, float dt)
             ecu->config.fuel_start_pct, dt, &ecu->config, &ecu->fuel);
         out.fuel_pct = fuel.actual_pct;
 
-        /* Check for EGT rise = ignition success */
-        if (egt.value > ecu->config.egt_start_min) {
+        /* Check EGT rise confirms ignition */
+        if (egt.value >= ecu->config.egt_start_min) {
             ecu_sm_transition(&ecu->sm, ECU_STATE_RAMP, ecu->time_ms);
         }
         if (ecu->time_ms - ecu->sm.state_enter_time > ecu->config.ignition_timeout_ms) {
@@ -117,7 +110,6 @@ ecu_outputs_t ecu_step(ecu_t *ecu, const ecu_inputs_t *inputs, float dt)
     case ECU_STATE_RAMP: {
         out.starter_on = false;
         out.igniter_on = false;
-        /* Ramp RPM toward start target */
         float target_rpm = ecu->config.rpm_start_target;
         float fuel_cmd = ecu_pid_update(&ecu->rpm_pid, target_rpm, rpm.value, dt);
         ecu_fuel_output_t fuel = ecu_fuel_compute(fuel_cmd, dt, &ecu->config, &ecu->fuel);
@@ -132,14 +124,12 @@ ecu_outputs_t ecu_step(ecu_t *ecu, const ecu_inputs_t *inputs, float dt)
     case ECU_STATE_RUN: {
         out.starter_on = false;
         out.igniter_on = false;
-        /* PID controls RPM based on throttle */
         float target_rpm = ecu->config.rpm_idle +
             (ecu->config.rpm_max - ecu->config.rpm_idle) * (inputs->throttle / 100.0f);
         float fuel_cmd = ecu_pid_update(&ecu->rpm_pid, target_rpm, rpm.value, dt);
         ecu_fuel_output_t fuel = ecu_fuel_compute(fuel_cmd, dt, &ecu->config, &ecu->fuel);
         out.fuel_pct = fuel.actual_pct;
 
-        /* Shutdown on zero throttle */
         if (inputs->throttle < 1.0f) {
             ecu_sm_transition(&ecu->sm, ECU_STATE_COOLDOWN, ecu->time_ms);
         }
@@ -149,7 +139,6 @@ ecu_outputs_t ecu_step(ecu_t *ecu, const ecu_inputs_t *inputs, float dt)
     case ECU_STATE_COOLDOWN:
         out.fuel_pct = 0.0f;
         ecu_fuel_cutoff(&ecu->fuel);
-        /* Wait for EGT to drop */
         if (egt.value < 100.0f) {
             ecu_sm_transition(&ecu->sm, ECU_STATE_SHUTDOWN, ecu->time_ms);
         }
