@@ -16,7 +16,7 @@ typedef struct {
     /* Fuel */
     float fuel_start_pct;
     float fuel_max_pct;
-    float fuel_ramp_rate;   /* %/sec ramp limit */
+    float fuel_ramp_rate;
 
     /* Timeouts (ms) */
     uint32_t prestart_timeout_ms;
@@ -25,9 +25,13 @@ typedef struct {
 
     /* RPM ramp */
     float rpm_ramp_rate;
+
+    /* PID tuning */
+    float pid_kp;
+    float pid_ki;
+    float pid_kd;
 } ecu_config_t;
 
-/* Get default configuration */
 void ecu_config_defaults(ecu_config_t *cfg);
 
 #endif /* ECU_CONFIG_H */

@@ -9,9 +9,9 @@ void ecu_init(ecu_t *ecu, const ecu_config_t *cfg)
     ecu->time_ms = 0;
 
     ecu_pid_config_t pid_cfg = {
-        .kp = 0.5f,
-        .ki = 0.1f,
-        .kd = 0.01f,
+        .kp = cfg->pid_kp,
+        .ki = cfg->pid_ki,
+        .kd = cfg->pid_kd,
         .output_min = 0.0f,
         .output_max = cfg->fuel_max_pct,
         .integral_max = 0.0f,
