@@ -3,7 +3,6 @@
 
 #include "core/ecu_types.h"
 
-/* Engine states */
 typedef enum {
     ECU_STATE_OFF = 0,
     ECU_STATE_PRESTART,
@@ -18,28 +17,36 @@ typedef enum {
 
 #define ECU_STATE_COUNT 9
 
-/* Transition result */
 typedef enum {
     SM_NO_CHANGE = 0,
     SM_TRANSITION,
 } sm_result_t;
 
-/* State machine context */
+/* Callback type for state entry/exit */
+typedef void (*ecu_sm_callback_t)(ecu_state_t state, void *ctx);
+
 typedef struct {
-    ecu_state_t current;
-    ecu_time_t  state_enter_time;
+    ecu_state_t        current;
+    ecu_time_t         state_enter_time;
+    ecu_time_t         timeout_ms;       /* per-state timeout (0 = none) */
+    ecu_sm_callback_t  on_enter;
+    ecu_sm_callback_t  on_exit;
+    void              *cb_ctx;
 } ecu_sm_t;
 
-/* Initialize state machine */
 void ecu_sm_init(ecu_sm_t *sm);
-
-/* Attempt state transition */
 sm_result_t ecu_sm_transition(ecu_sm_t *sm, ecu_state_t next, ecu_time_t now);
-
-/* Get current state */
 ecu_state_t ecu_sm_state(const ecu_sm_t *sm);
-
-/* Get name of state */
 const char *ecu_sm_state_name(ecu_state_t state);
+
+/* Set callbacks for state transitions */
+void ecu_sm_set_callbacks(ecu_sm_t *sm, ecu_sm_callback_t on_enter,
+                          ecu_sm_callback_t on_exit, void *ctx);
+
+/* Set timeout for current state */
+void ecu_sm_set_timeout(ecu_sm_t *sm, ecu_time_t timeout_ms);
+
+/* Check if current state has timed out */
+bool ecu_sm_timed_out(const ecu_sm_t *sm, ecu_time_t now);
 
 #endif /* ECU_SM_H */

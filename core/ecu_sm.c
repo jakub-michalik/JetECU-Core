@@ -1,6 +1,5 @@
 #include "core/ecu_sm.h"
 
-/* Valid transitions: from -> to */
 static const struct {
     ecu_state_t from;
     ecu_state_t to;
@@ -27,6 +26,29 @@ void ecu_sm_init(ecu_sm_t *sm)
 {
     sm->current = ECU_STATE_OFF;
     sm->state_enter_time = 0;
+    sm->timeout_ms = 0;
+    sm->on_enter = NULL;
+    sm->on_exit = NULL;
+    sm->cb_ctx = NULL;
+}
+
+void ecu_sm_set_callbacks(ecu_sm_t *sm, ecu_sm_callback_t on_enter,
+                          ecu_sm_callback_t on_exit, void *ctx)
+{
+    sm->on_enter = on_enter;
+    sm->on_exit = on_exit;
+    sm->cb_ctx = ctx;
+}
+
+void ecu_sm_set_timeout(ecu_sm_t *sm, ecu_time_t timeout_ms)
+{
+    sm->timeout_ms = timeout_ms;
+}
+
+bool ecu_sm_timed_out(const ecu_sm_t *sm, ecu_time_t now)
+{
+    if (sm->timeout_ms == 0) return false;
+    return (now - sm->state_enter_time) > sm->timeout_ms;
 }
 
 sm_result_t ecu_sm_transition(ecu_sm_t *sm, ecu_state_t next, ecu_time_t now)
@@ -38,8 +60,21 @@ sm_result_t ecu_sm_transition(ecu_sm_t *sm, ecu_state_t next, ecu_time_t now)
     for (size_t i = 0; i < NUM_TRANSITIONS; i++) {
         if (valid_transitions[i].from == sm->current &&
             valid_transitions[i].to == next) {
+
+            /* Exit callback */
+            if (sm->on_exit) {
+                sm->on_exit(sm->current, sm->cb_ctx);
+            }
+
             sm->current = next;
             sm->state_enter_time = now;
+            sm->timeout_ms = 0;  /* reset timeout for new state */
+
+            /* Enter callback */
+            if (sm->on_enter) {
+                sm->on_enter(next, sm->cb_ctx);
+            }
+
             return SM_TRANSITION;
         }
     }
@@ -53,15 +88,8 @@ ecu_state_t ecu_sm_state(const ecu_sm_t *sm)
 }
 
 static const char *state_names[] = {
-    "OFF",
-    "PRESTART",
-    "SPINUP",
-    "IGNITION",
-    "RAMP",
-    "RUN",
-    "COOLDOWN",
-    "SHUTDOWN",
-    "FAULT",
+    "OFF", "PRESTART", "SPINUP", "IGNITION",
+    "RAMP", "RUN", "COOLDOWN", "SHUTDOWN", "FAULT",
 };
 
 const char *ecu_sm_state_name(ecu_state_t state)
