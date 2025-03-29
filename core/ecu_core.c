@@ -37,11 +37,32 @@ void ecu_init(ecu_t *ecu, const ecu_config_t *cfg)
     ecu_sensor_init(&ecu->egt_sensor);
 }
 
+#define FAULT_SENSOR     0x01
+#define FAULT_PRESTART   0x02
+#define FAULT_SPINUP     0x04
+#define FAULT_IGNITION   0x08
+#define FAULT_OVERSPEED  0x10
+#define FAULT_OVERTEMP   0x20
+
 static void enter_fault(ecu_t *ecu, uint32_t code)
 {
     ecu->fault_code |= code;
     ecu_sm_transition(&ecu->sm, ECU_STATE_FAULT, ecu->time_ms);
     ecu_fuel_cutoff(&ecu->fuel);
+}
+
+/* Check safety limits — called every step in active states */
+static bool check_protections(ecu_t *ecu, float rpm, float egt)
+{
+    if (rpm > ecu->config.rpm_max) {
+        enter_fault(ecu, FAULT_OVERSPEED);
+        return false;
+    }
+    if (egt > ecu->config.egt_max) {
+        enter_fault(ecu, FAULT_OVERTEMP);
+        return false;
+    }
+    return true;
 }
 
 ecu_outputs_t ecu_step(ecu_t *ecu, const ecu_inputs_t *inputs, float dt)
@@ -69,10 +90,9 @@ ecu_outputs_t ecu_step(ecu_t *ecu, const ecu_inputs_t *inputs, float dt)
     case ECU_STATE_PRESTART:
         out.fuel_pct = 0.0f;
         out.starter_on = false;
-        /* Sensor self-check: need at least one valid reading before proceeding */
         if (!rpm.valid || !egt.valid) {
             if (ecu->time_ms - ecu->sm.state_enter_time > ecu->config.prestart_timeout_ms) {
-                enter_fault(ecu, 0x01);
+                enter_fault(ecu, FAULT_SENSOR);
             }
             break;
         }
@@ -86,7 +106,7 @@ ecu_outputs_t ecu_step(ecu_t *ecu, const ecu_inputs_t *inputs, float dt)
             ecu_sm_transition(&ecu->sm, ECU_STATE_IGNITION, ecu->time_ms);
         }
         if (ecu->time_ms - ecu->sm.state_enter_time > ecu->config.spinup_timeout_ms) {
-            enter_fault(ecu, 0x04);
+            enter_fault(ecu, FAULT_SPINUP);
         }
         break;
 
@@ -96,25 +116,23 @@ ecu_outputs_t ecu_step(ecu_t *ecu, const ecu_inputs_t *inputs, float dt)
         ecu_fuel_output_t fuel = ecu_fuel_compute(
             ecu->config.fuel_start_pct, dt, &ecu->config, &ecu->fuel);
         out.fuel_pct = fuel.actual_pct;
-
-        /* Check EGT rise confirms ignition */
         if (egt.value >= ecu->config.egt_start_min) {
             ecu_sm_transition(&ecu->sm, ECU_STATE_RAMP, ecu->time_ms);
         }
         if (ecu->time_ms - ecu->sm.state_enter_time > ecu->config.ignition_timeout_ms) {
-            enter_fault(ecu, 0x08);
+            enter_fault(ecu, FAULT_IGNITION);
         }
         break;
     }
 
     case ECU_STATE_RAMP: {
+        if (!check_protections(ecu, rpm.value, egt.value)) break;
         out.starter_on = false;
         out.igniter_on = false;
         float target_rpm = ecu->config.rpm_start_target;
         float fuel_cmd = ecu_pid_update(&ecu->rpm_pid, target_rpm, rpm.value, dt);
         ecu_fuel_output_t fuel = ecu_fuel_compute(fuel_cmd, dt, &ecu->config, &ecu->fuel);
         out.fuel_pct = fuel.actual_pct;
-
         if (rpm.value >= ecu->config.rpm_start_target * 0.95f) {
             ecu_sm_transition(&ecu->sm, ECU_STATE_RUN, ecu->time_ms);
         }
@@ -122,6 +140,7 @@ ecu_outputs_t ecu_step(ecu_t *ecu, const ecu_inputs_t *inputs, float dt)
     }
 
     case ECU_STATE_RUN: {
+        if (!check_protections(ecu, rpm.value, egt.value)) break;
         out.starter_on = false;
         out.igniter_on = false;
         float target_rpm = ecu->config.rpm_idle +
@@ -129,7 +148,6 @@ ecu_outputs_t ecu_step(ecu_t *ecu, const ecu_inputs_t *inputs, float dt)
         float fuel_cmd = ecu_pid_update(&ecu->rpm_pid, target_rpm, rpm.value, dt);
         ecu_fuel_output_t fuel = ecu_fuel_compute(fuel_cmd, dt, &ecu->config, &ecu->fuel);
         out.fuel_pct = fuel.actual_pct;
-
         if (inputs->throttle < 1.0f) {
             ecu_sm_transition(&ecu->sm, ECU_STATE_COOLDOWN, ecu->time_ms);
         }
