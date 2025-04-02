@@ -1,5 +1,12 @@
 #include "core/ecu_core.h"
 
+#define FAULT_SENSOR     0x01
+#define FAULT_PRESTART   0x02
+#define FAULT_SPINUP     0x04
+#define FAULT_IGNITION   0x08
+#define FAULT_OVERSPEED  0x10
+#define FAULT_OVERTEMP   0x20
+
 void ecu_init(ecu_t *ecu, const ecu_config_t *cfg)
 {
     ecu->config = *cfg;
@@ -37,21 +44,18 @@ void ecu_init(ecu_t *ecu, const ecu_config_t *cfg)
     ecu_sensor_init(&ecu->egt_sensor);
 }
 
-#define FAULT_SENSOR     0x01
-#define FAULT_PRESTART   0x02
-#define FAULT_SPINUP     0x04
-#define FAULT_IGNITION   0x08
-#define FAULT_OVERSPEED  0x10
-#define FAULT_OVERTEMP   0x20
-
 static void enter_fault(ecu_t *ecu, uint32_t code)
 {
+    /* Don't re-enter fault if already in fault state */
+    if (ecu_sm_state(&ecu->sm) == ECU_STATE_FAULT) {
+        ecu->fault_code |= code;
+        return;
+    }
     ecu->fault_code |= code;
     ecu_sm_transition(&ecu->sm, ECU_STATE_FAULT, ecu->time_ms);
     ecu_fuel_cutoff(&ecu->fuel);
 }
 
-/* Check safety limits — called every step in active states */
 static bool check_protections(ecu_t *ecu, float rpm, float egt)
 {
     if (rpm > ecu->config.rpm_max) {
