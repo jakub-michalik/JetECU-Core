@@ -19,11 +19,13 @@ static void apply_json(const json_obj_t *obj, ecu_config_t *cfg)
     if ((v = json_get(obj, "spinup_timeout_ms")))    cfg->spinup_timeout_ms = (uint32_t)*v;
     if ((v = json_get(obj, "ignition_timeout_ms")))  cfg->ignition_timeout_ms = (uint32_t)*v;
     if ((v = json_get(obj, "rpm_ramp_rate")))     cfg->rpm_ramp_rate = *v;
+    if ((v = json_get(obj, "pid_kp")))            cfg->pid_kp = *v;
+    if ((v = json_get(obj, "pid_ki")))            cfg->pid_ki = *v;
+    if ((v = json_get(obj, "pid_kd")))            cfg->pid_kd = *v;
 }
 
 ecu_err_t ecu_config_load_str(const char *json, ecu_config_t *cfg)
 {
-    /* Start from defaults */
     ecu_config_defaults(cfg);
 
     json_obj_t obj;
@@ -39,7 +41,6 @@ ecu_err_t ecu_config_load_file(const char *path, ecu_config_t *cfg)
 {
     FILE *f = fopen(path, "r");
     if (!f) {
-        /* Fall back to defaults */
         ecu_config_defaults(cfg);
         return ECU_ERR_CONFIG;
     }
