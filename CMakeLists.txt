@@ -4,7 +4,6 @@ project(JetECU VERSION 0.1.0 LANGUAGES C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# Compiler warnings
 add_compile_options(-Wall -Wextra -Wpedantic)
 
 # Core library
@@ -14,6 +13,9 @@ add_library(ecu_core
     core/ecu_config.c
     core/ecu_json.c
     core/ecu_config_load.c
+    core/ecu_pid.c
+    core/ecu_fuel.c
+    core/ecu_core.c
 )
 target_include_directories(ecu_core PUBLIC ${CMAKE_SOURCE_DIR})
 
@@ -32,7 +34,18 @@ add_executable(test_config test/test_config.c)
 target_link_libraries(test_config ecu_core)
 add_test(NAME config COMMAND test_config)
 
-# Default build type
+add_executable(test_pid test/test_pid.c)
+target_link_libraries(test_pid ecu_core)
+add_test(NAME pid COMMAND test_pid)
+
+add_executable(test_fuel test/test_fuel.c)
+target_link_libraries(test_fuel ecu_core)
+add_test(NAME fuel COMMAND test_fuel)
+
+add_executable(test_core test/test_core.c)
+target_link_libraries(test_core ecu_core)
+add_test(NAME core COMMAND test_core)
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
