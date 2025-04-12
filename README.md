@@ -233,6 +233,16 @@ No dynamic memory allocation. Deterministic timing.
 
 ---
 
+## Testing
+
+The test suite covers:
+- State machine transitions and edge cases
+- Sensor validation (range, rate, stuck-at)
+- Configuration loading and defaults
+- PID controller behavior
+- Fuel scheduling and safety cutoff
+- Full ECU step integration (start, fault, overspeed)
+
 ## Building
 
 ```bash
