@@ -4,9 +4,20 @@
 #include "core/ecu_core.h"
 #include "core/ecu_config_load.h"
 #include "sim/sim_engine.h"
+#include "sim/sim_replay.h"
 
-#define SIM_DT 0.001f   /* 1ms step */
-#define SIM_DURATION 30.0f  /* seconds */
+#define SIM_DT 0.001f
+#define DEFAULT_DURATION 30.0f
+
+static void usage(const char *prog)
+{
+    fprintf(stderr, "Usage: %s [options]\n", prog);
+    fprintf(stderr, "  -c <file>   Config JSON file\n");
+    fprintf(stderr, "  -r <file>   Replay CSV file (overrides engine model)\n");
+    fprintf(stderr, "  -d <secs>   Simulation duration (default: %.0f)\n", DEFAULT_DURATION);
+    fprintf(stderr, "  -q          Quiet (no CSV output)\n");
+    fprintf(stderr, "  -h          Help\n");
+}
 
 static void print_header(void)
 {
@@ -25,21 +36,28 @@ int main(int argc, char *argv[])
 {
     ecu_config_t cfg;
     const char *config_file = NULL;
-    float duration = SIM_DURATION;
+    const char *replay_file = NULL;
+    float duration = DEFAULT_DURATION;
+    int quiet = 0;
 
-    /* Parse args */
     for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-c") == 0 && i + 1 < argc) {
+        if (strcmp(argv[i], "-c") == 0 && i + 1 < argc)
             config_file = argv[++i];
-        } else if (strcmp(argv[i], "-d") == 0 && i + 1 < argc) {
+        else if (strcmp(argv[i], "-r") == 0 && i + 1 < argc)
+            replay_file = argv[++i];
+        else if (strcmp(argv[i], "-d") == 0 && i + 1 < argc)
             duration = (float)atof(argv[++i]);
+        else if (strcmp(argv[i], "-q") == 0)
+            quiet = 1;
+        else if (strcmp(argv[i], "-h") == 0) {
+            usage(argv[0]);
+            return 0;
         }
     }
 
     if (config_file) {
         if (ecu_config_load_file(config_file, &cfg) != ECU_OK) {
             fprintf(stderr, "Warning: failed to load %s, using defaults\n", config_file);
-            ecu_config_defaults(&cfg);
         }
     } else {
         ecu_config_defaults(&cfg);
@@ -51,32 +69,47 @@ int main(int argc, char *argv[])
     sim_engine_t engine;
     sim_engine_init(&engine);
 
-    print_header();
+    sim_replay_t replay;
+    int use_replay = 0;
+    if (replay_file) {
+        if (sim_replay_open(&replay, replay_file) == 0) {
+            use_replay = 1;
+        } else {
+            fprintf(stderr, "Error: failed to open replay file %s\n", replay_file);
+            return 1;
+        }
+    }
+
+    if (!quiet) print_header();
 
     float t = 0.0f;
-    int print_interval = 100;  /* print every 100 steps (100ms) */
+    int print_interval = 100;
     int step = 0;
 
     while (t < duration) {
-        /* Simple throttle profile */
-        float throttle = 0.0f;
-        if (t > 1.0f) throttle = 80.0f;         /* start at t=1s */
-        if (t > 20.0f) throttle = 50.0f;        /* reduce */
-        if (t > 25.0f) throttle = 0.0f;         /* shutdown */
+        ecu_inputs_t in;
 
-        ecu_inputs_t in = {
-            .rpm = engine.rpm,
-            .egt = engine.egt,
-            .throttle = throttle,
-        };
+        if (use_replay) {
+            sim_replay_get(&replay, t, &in);
+        } else {
+            float throttle = 0.0f;
+            if (t > 1.0f) throttle = 80.0f;
+            if (t > 20.0f) throttle = 50.0f;
+            if (t > 25.0f) throttle = 0.0f;
+
+            in.rpm = engine.rpm;
+            in.egt = engine.egt;
+            in.throttle = throttle;
+        }
 
         ecu_outputs_t out = ecu_step(&ecu, &in, SIM_DT);
 
-        /* Feed outputs back to engine model */
-        float starter = out.starter_on ? 500.0f : 0.0f;
-        sim_engine_step(&engine, out.fuel_pct, starter, SIM_DT);
+        if (!use_replay) {
+            float starter = out.starter_on ? 500.0f : 0.0f;
+            sim_engine_step(&engine, out.fuel_pct, starter, SIM_DT);
+        }
 
-        if (step % print_interval == 0) {
+        if (!quiet && step % print_interval == 0) {
             print_row(t, &out, &in);
         }
 
@@ -84,8 +117,10 @@ int main(int argc, char *argv[])
         step++;
     }
 
+    if (use_replay) sim_replay_close(&replay);
+
     if (ecu.fault_code) {
-        fprintf(stderr, "Simulation ended with fault code: 0x%02x\n", ecu.fault_code);
+        fprintf(stderr, "Fault code: 0x%02x\n", ecu.fault_code);
         return 1;
     }
     return 0;
