@@ -6,7 +6,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 
-# Core library
+# Core library (platform-independent)
 add_library(ecu_core
     core/ecu_sm.c
     core/ecu_sensor.c
@@ -18,6 +18,26 @@ add_library(ecu_core
     core/ecu_core.c
 )
 target_include_directories(ecu_core PUBLIC ${CMAKE_SOURCE_DIR})
+
+# POSIX HAL
+add_library(hal_posix
+    platform/posix/hal_adc_posix.c
+    platform/posix/hal_gpio_posix.c
+    platform/posix/hal_pwm_posix.c
+    platform/posix/hal_timer_posix.c
+    platform/posix/hal_nvram_posix.c
+    platform/posix/hal_watchdog_posix.c
+    platform/posix/hal_uart_posix.c
+)
+target_include_directories(hal_posix PUBLIC ${CMAKE_SOURCE_DIR})
+
+# Simulator
+add_executable(jetecu_sim
+    sim/sim_main.c
+    sim/sim_engine.c
+    sim/sim_replay.c
+)
+target_link_libraries(jetecu_sim ecu_core hal_posix)
 
 # Tests
 enable_testing()
