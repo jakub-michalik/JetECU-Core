@@ -14,7 +14,7 @@ jobs:
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
       - name: Build
-        run: cmake --build build
+        run: cmake --build build --parallel
       - name: Test
         run: cd build && ctest --output-on-failure
 
@@ -27,7 +27,7 @@ jobs:
       - name: Configure
         run: CC=clang cmake -B build -DCMAKE_BUILD_TYPE=Debug
       - name: Build
-        run: cmake --build build
+        run: cmake --build build --parallel
       - name: Test
         run: cd build && ctest --output-on-failure
 
@@ -35,13 +35,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Configure with ASan
+      - name: Configure with ASan + UBSan
         run: >
           cmake -B build
           -DCMAKE_BUILD_TYPE=Debug
-          -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer"
+          -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g"
           -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
       - name: Build
-        run: cmake --build build
+        run: cmake --build build --parallel
       - name: Test
         run: cd build && ctest --output-on-failure
+      - name: Run simulator smoke test
+        run: cd build && ./jetecu_sim -d 5 -q
