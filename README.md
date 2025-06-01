@@ -233,6 +233,22 @@ No dynamic memory allocation. Deterministic timing.
 
 ---
 
+## Simulator
+
+Run the POSIX simulator:
+```bash
+cd build
+./jetecu_sim                        # default 30s run
+./jetecu_sim -d 60                  # 60 second run
+./jetecu_sim -c ../config/default.json  # with config
+./jetecu_sim -r ../test/data/start_sequence.csv  # replay mode
+./jetecu_sim -q                     # quiet (no CSV output)
+```
+
+Output is CSV: `time_s,state,rpm,egt,fuel_pct,throttle,igniter,starter`
+
+---
+
 ## Testing
 
 The test suite covers:
