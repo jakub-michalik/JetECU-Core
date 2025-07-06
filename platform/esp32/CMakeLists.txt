@@ -1,0 +1,21 @@
+# ESP-IDF component CMakeLists
+idf_component_register(
+    SRCS
+        "hal_adc_esp32.c"
+        "hal_gpio_esp32.c"
+        "hal_pwm_esp32.c"
+        "hal_timer_esp32.c"
+        "hal_nvram_esp32.c"
+        "hal_watchdog_esp32.c"
+        "hal_uart_esp32.c"
+        "hal_system_esp32.c"
+        "main.c"
+    INCLUDE_DIRS
+        "${CMAKE_SOURCE_DIR}"
+        "${CMAKE_SOURCE_DIR}/core"
+        "${CMAKE_SOURCE_DIR}/hal"
+    REQUIRES
+        driver
+        nvs_flash
+        esp_timer
+)
