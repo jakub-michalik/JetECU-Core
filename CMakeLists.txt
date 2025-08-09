@@ -6,7 +6,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 
-# Core library (platform-independent)
+# Core library
 add_library(ecu_core
     core/ecu_sm.c
     core/ecu_sensor.c
@@ -19,6 +19,14 @@ add_library(ecu_core
 )
 target_include_directories(ecu_core PUBLIC ${CMAKE_SOURCE_DIR})
 
+# Telemetry
+add_library(ecu_telemetry
+    telemetry/tel_frame.c
+    telemetry/tel_send.c
+)
+target_include_directories(ecu_telemetry PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries(ecu_telemetry ecu_core)
+
 # POSIX HAL
 add_library(hal_posix
     platform/posix/hal_adc_posix.c
@@ -28,6 +36,7 @@ add_library(hal_posix
     platform/posix/hal_nvram_posix.c
     platform/posix/hal_watchdog_posix.c
     platform/posix/hal_uart_posix.c
+    platform/posix/hal_system_posix.c
 )
 target_include_directories(hal_posix PUBLIC ${CMAKE_SOURCE_DIR})
 
@@ -65,6 +74,10 @@ add_test(NAME fuel COMMAND test_fuel)
 add_executable(test_core test/test_core.c)
 target_link_libraries(test_core ecu_core)
 add_test(NAME core COMMAND test_core)
+
+add_executable(test_telemetry test/test_telemetry.c)
+target_link_libraries(test_telemetry ecu_telemetry)
+add_test(NAME telemetry COMMAND test_telemetry)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
