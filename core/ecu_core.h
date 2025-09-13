@@ -7,15 +7,14 @@
 #include "core/ecu_sensor.h"
 #include "core/ecu_pid.h"
 #include "core/ecu_fuel.h"
+#include "core/ecu_map.h"
 
-/* Sensor inputs to the ECU step function */
 typedef struct {
     float rpm;
-    float egt;          /* degC */
-    float throttle;     /* 0-100% */
+    float egt;
+    float throttle;
 } ecu_inputs_t;
 
-/* Outputs from the ECU step function */
 typedef struct {
     float fuel_pct;
     bool  igniter_on;
@@ -24,7 +23,6 @@ typedef struct {
     uint32_t fault_code;
 } ecu_outputs_t;
 
-/* Main ECU context */
 typedef struct {
     ecu_sm_t           sm;
     ecu_config_t       config;
@@ -37,14 +35,15 @@ typedef struct {
     ecu_sensor_config_t rpm_sensor_cfg;
     ecu_sensor_config_t egt_sensor_cfg;
 
+    /* Maps */
+    ecu_map1d_t fuel_map;
+    ecu_map1d_t egt_limit_map;
+
     uint32_t fault_code;
     ecu_time_t time_ms;
 } ecu_t;
 
-/* Initialize the ECU */
 void ecu_init(ecu_t *ecu, const ecu_config_t *cfg);
-
-/* Run one step. dt in seconds. Returns outputs. */
 ecu_outputs_t ecu_step(ecu_t *ecu, const ecu_inputs_t *inputs, float dt);
 
 #endif /* ECU_CORE_H */
