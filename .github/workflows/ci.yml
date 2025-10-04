@@ -45,5 +45,19 @@ jobs:
         run: cmake --build build --parallel
       - name: Test
         run: cd build && ctest --output-on-failure
-      - name: Run simulator smoke test
+      - name: Simulator smoke test
         run: cd build && ./jetecu_sim -d 5 -q
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang-tidy
+        run: sudo apt-get update && sudo apt-get install -y clang-tidy
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Run clang-tidy
+        run: >
+          find core/ telemetry/ -name '*.c' |
+          xargs clang-tidy -p build --warnings-as-errors='bugprone-*'
+        continue-on-error: true
