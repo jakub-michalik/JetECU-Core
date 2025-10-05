@@ -1,10 +1,16 @@
 cmake_minimum_required(VERSION 3.14)
-project(JetECU VERSION 0.1.0 LANGUAGES C)
+project(JetECU VERSION 0.2.0 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 add_compile_options(-Wall -Wextra -Wpedantic)
+
+option(ENABLE_SANITIZERS "Enable ASan + UBSan" OFF)
+if(ENABLE_SANITIZERS)
+    add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=address,undefined)
+endif()
 
 # Core library
 add_library(ecu_core
@@ -16,6 +22,8 @@ add_library(ecu_core
     core/ecu_pid.c
     core/ecu_fuel.c
     core/ecu_core.c
+    core/ecu_map.c
+    core/ecu_fault.c
 )
 target_include_directories(ecu_core PUBLIC ${CMAKE_SOURCE_DIR})
 
@@ -51,33 +59,26 @@ target_link_libraries(jetecu_sim ecu_core hal_posix)
 # Tests
 enable_testing()
 
-add_executable(test_sm test/test_sm.c)
-target_link_libraries(test_sm ecu_core)
-add_test(NAME state_machine COMMAND test_sm)
+macro(add_ecu_test name src)
+    add_executable(${name} ${src})
+    target_link_libraries(${name} ecu_core)
+    add_test(NAME ${name} COMMAND ${name})
+endmacro()
 
-add_executable(test_sensor test/test_sensor.c)
-target_link_libraries(test_sensor ecu_core)
-add_test(NAME sensor COMMAND test_sensor)
-
-add_executable(test_config test/test_config.c)
-target_link_libraries(test_config ecu_core)
-add_test(NAME config COMMAND test_config)
-
-add_executable(test_pid test/test_pid.c)
-target_link_libraries(test_pid ecu_core)
-add_test(NAME pid COMMAND test_pid)
-
-add_executable(test_fuel test/test_fuel.c)
-target_link_libraries(test_fuel ecu_core)
-add_test(NAME fuel COMMAND test_fuel)
-
-add_executable(test_core test/test_core.c)
-target_link_libraries(test_core ecu_core)
-add_test(NAME core COMMAND test_core)
+add_ecu_test(test_sm test/test_sm.c)
+add_ecu_test(test_sensor test/test_sensor.c)
+add_ecu_test(test_config test/test_config.c)
+add_ecu_test(test_pid test/test_pid.c)
+add_ecu_test(test_fuel test/test_fuel.c)
+add_ecu_test(test_core test/test_core.c)
+add_ecu_test(test_map test/test_map.c)
+add_ecu_test(test_fault test/test_fault.c)
+add_ecu_test(test_fuzz test/test_fuzz.c)
+add_ecu_test(test_perf test/test_perf.c)
 
 add_executable(test_telemetry test/test_telemetry.c)
 target_link_libraries(test_telemetry ecu_telemetry)
-add_test(NAME telemetry COMMAND test_telemetry)
+add_test(NAME test_telemetry COMMAND test_telemetry)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
