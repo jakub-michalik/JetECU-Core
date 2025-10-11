@@ -1,11 +1,12 @@
 #include "core/ecu_core.h"
+#include "core/ecu_maps_default.h"
 
-#define FAULT_SENSOR     0x01
-#define FAULT_PRESTART   0x02
-#define FAULT_SPINUP     0x04
-#define FAULT_IGNITION   0x08
-#define FAULT_OVERSPEED  0x10
-#define FAULT_OVERTEMP   0x20
+#define FAULT_SENSOR     0x0001
+#define FAULT_PRESTART   0x0002
+#define FAULT_SPINUP     0x0004
+#define FAULT_IGNITION   0x0008
+#define FAULT_OVERSPEED  0x0010
+#define FAULT_OVERTEMP   0x0020
 
 void ecu_init(ecu_t *ecu, const ecu_config_t *cfg)
 {
@@ -42,11 +43,14 @@ void ecu_init(ecu_t *ecu, const ecu_config_t *cfg)
 
     ecu_sensor_init(&ecu->rpm_sensor);
     ecu_sensor_init(&ecu->egt_sensor);
+
+    /* Load default maps */
+    ecu->fuel_map = default_fuel_map;
+    ecu->egt_limit_map = default_egt_limit_map;
 }
 
 static void enter_fault(ecu_t *ecu, uint32_t code)
 {
-    /* Don't re-enter fault if already in fault state */
     if (ecu_sm_state(&ecu->sm) == ECU_STATE_FAULT) {
         ecu->fault_code |= code;
         return;
@@ -62,7 +66,12 @@ static bool check_protections(ecu_t *ecu, float rpm, float egt)
         enter_fault(ecu, FAULT_OVERSPEED);
         return false;
     }
-    if (egt > ecu->config.egt_max) {
+
+    /* Use EGT limit map if available, otherwise flat limit */
+    float egt_limit = ecu_map1d_lookup(&ecu->egt_limit_map, rpm);
+    if (egt_limit < 100.0f) egt_limit = ecu->config.egt_max;  /* fallback */
+
+    if (egt > egt_limit) {
         enter_fault(ecu, FAULT_OVERTEMP);
         return false;
     }
