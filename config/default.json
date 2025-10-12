@@ -10,5 +10,8 @@
     "prestart_timeout_ms": 5000,
     "spinup_timeout_ms": 10000,
     "ignition_timeout_ms": 8000,
-    "rpm_ramp_rate": 400
+    "rpm_ramp_rate": 400,
+    "pid_kp": 0.5,
+    "pid_ki": 0.1,
+    "pid_kd": 0.01
 }
