@@ -233,6 +233,18 @@ No dynamic memory allocation. Deterministic timing.
 
 ---
 
+## Fault Handling
+
+The fault manager provides:
+- **Severity levels**: Info, Warning, Critical, Fatal
+- **Latching**: Critical/Fatal faults cannot be cleared without reset
+- **Priority arbitration**: Highest severity determines system action
+- **Retry policies**: Configurable retry count for recoverable faults
+- **Degrade modes**: Warning faults reduce power instead of shutdown
+- **Fault log**: Circular buffer with timestamps for post-mortem analysis
+
+---
+
 ## Simulator
 
 Run the POSIX simulator:
