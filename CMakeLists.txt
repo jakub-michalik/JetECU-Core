@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(JetECU VERSION 0.2.0 LANGUAGES C)
+project(JetECU VERSION 0.3.0 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -12,7 +12,7 @@ if(ENABLE_SANITIZERS)
     add_link_options(-fsanitize=address,undefined)
 endif()
 
-# Core library
+# Core library (platform-independent)
 add_library(ecu_core
     core/ecu_sm.c
     core/ecu_sensor.c
@@ -24,6 +24,7 @@ add_library(ecu_core
     core/ecu_core.c
     core/ecu_map.c
     core/ecu_fault.c
+    core/ecu_scheduler.c
 )
 target_include_directories(ecu_core PUBLIC ${CMAKE_SOURCE_DIR})
 
@@ -75,6 +76,7 @@ add_ecu_test(test_map test/test_map.c)
 add_ecu_test(test_fault test/test_fault.c)
 add_ecu_test(test_fuzz test/test_fuzz.c)
 add_ecu_test(test_perf test/test_perf.c)
+add_ecu_test(test_scheduler test/test_scheduler.c)
 
 add_executable(test_telemetry test/test_telemetry.c)
 target_link_libraries(test_telemetry ecu_telemetry)
@@ -84,4 +86,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+# Export compile commands for clang-tidy
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+message(STATUS "JetECU v${PROJECT_VERSION} — Build type: ${CMAKE_BUILD_TYPE}")
