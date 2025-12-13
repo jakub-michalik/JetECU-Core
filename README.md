@@ -219,17 +219,26 @@ No dynamic memory allocation. Deterministic timing.
 
 ---
 
+## Current Status (v0.3)
+
+- Core logic: state machine, PID, fuel scheduling, sensor validation
+- Fault manager with severity, latching, retry, and degrade modes
+- Lookup maps (1D, 2D) with interpolation
+- POSIX simulator with engine model and CSV replay
+- Telemetry protocol with CRC-16 framing
+- ESP32 HAL implementation
+- STM32F4 HAL implementation with CAN bus
+- Static task scheduler with overrun detection
+- 12 test suites: unit, integration, fuzz, performance
+- CI: GCC, Clang, sanitizers, clang-tidy
+- Architecture and fault documentation
+
 ## Next Steps
 
-1. Define the repo directory layout (`core/`, `hal/`, `platform/`, `sim/`, `test/`, `config/`)
-2. Implement the state machine skeleton in plain C
-3. Write the HAL interface headers (ADC, GPIO, PWM, timer, NVRAM, watchdog)
-4. Build the POSIX simulator port as the first platform target
-5. Set up the test harness and write initial scenario tests (startup, nominal run, EGT fault)
-6. Define the telemetry frame format and implement UART transport
-7. Implement the configuration loader (JSON parser for PC, NVRAM reader for MCU)
-8. Port to ESP32 as the first embedded target
-9. Set up CI pipeline with the POSIX build + tests
+1. Hardware testing on ESP32 and STM32
+2. Full test coverage audit
+3. CAN telemetry transport implementation
+4. v1.0 certification-grade release
 
 ---
 
