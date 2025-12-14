@@ -47,7 +47,7 @@ void ecu_sched_tick(ecu_scheduler_t *sched, uint32_t now_ms)
         sched_task_t *t = &sched->tasks[i];
         uint32_t elapsed = now_ms - t->last_run_ms;
 
-        if (elapsed >= t->interval_ms) {
+        if (t->run_count == 0 || elapsed >= t->interval_ms) {
             uint32_t start = now_ms;  /* In real impl, use microsecond timer */
             t->fn(t->ctx);
             uint32_t end = now_ms;    /* Would need hal_timer_micros() */
