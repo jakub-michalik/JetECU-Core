@@ -52,6 +52,21 @@ add_library(hal_posix
 )
 target_include_directories(hal_posix PUBLIC ${CMAKE_SOURCE_DIR})
 
+# C++ wrapper library
+add_library(ecu_cpp
+    cpp/jetecu/Engine.cpp
+    cpp/jetecu/StateMachine.cpp
+    cpp/jetecu/Pid.cpp
+    cpp/jetecu/Sensor.cpp
+    cpp/jetecu/FaultManager.cpp
+    cpp/jetecu/Map.cpp
+    cpp/jetecu/Scheduler.cpp
+    cpp/jetecu/Config.cpp
+    cpp/jetecu/Telemetry.cpp
+)
+target_include_directories(ecu_cpp PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries(ecu_cpp PUBLIC ecu_core ecu_telemetry)
+
 # Simulator
 add_executable(jetecu_sim
     sim/sim_main.c
