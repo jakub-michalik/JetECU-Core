@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #include <functional>
+#include <string>
 
 namespace jetecu {
 
