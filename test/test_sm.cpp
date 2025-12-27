@@ -1,0 +1,83 @@
+#include <gtest/gtest.h>
+
+extern "C" {
+#include "core/ecu_sm.h"
+}
+
+TEST(StateMachine, Init) {
+    ecu_sm_t sm;
+    ecu_sm_init(&sm);
+    EXPECT_EQ(ecu_sm_state(&sm), ECU_STATE_OFF);
+}
+
+TEST(StateMachine, ValidTransition) {
+    ecu_sm_t sm;
+    ecu_sm_init(&sm);
+
+    sm_result_t r = ecu_sm_transition(&sm, ECU_STATE_PRESTART, 100);
+    EXPECT_EQ(r, SM_TRANSITION);
+    EXPECT_EQ(ecu_sm_state(&sm), ECU_STATE_PRESTART);
+}
+
+TEST(StateMachine, InvalidTransition) {
+    ecu_sm_t sm;
+    ecu_sm_init(&sm);
+
+    sm_result_t r = ecu_sm_transition(&sm, ECU_STATE_RUN, 100);
+    EXPECT_EQ(r, SM_NO_CHANGE);
+    EXPECT_EQ(ecu_sm_state(&sm), ECU_STATE_OFF);
+}
+
+TEST(StateMachine, FaultFromSpinup) {
+    ecu_sm_t sm;
+    ecu_sm_init(&sm);
+
+    ecu_sm_transition(&sm, ECU_STATE_PRESTART, 100);
+    ecu_sm_transition(&sm, ECU_STATE_SPINUP, 200);
+    sm_result_t r = ecu_sm_transition(&sm, ECU_STATE_FAULT, 300);
+    EXPECT_EQ(r, SM_TRANSITION);
+    EXPECT_EQ(ecu_sm_state(&sm), ECU_STATE_FAULT);
+}
+
+TEST(StateMachine, FullSequence) {
+    ecu_sm_t sm;
+    ecu_sm_init(&sm);
+
+    EXPECT_EQ(ecu_sm_transition(&sm, ECU_STATE_PRESTART, 100), SM_TRANSITION);
+    EXPECT_EQ(ecu_sm_transition(&sm, ECU_STATE_SPINUP, 200), SM_TRANSITION);
+    EXPECT_EQ(ecu_sm_transition(&sm, ECU_STATE_IGNITION, 300), SM_TRANSITION);
+    EXPECT_EQ(ecu_sm_transition(&sm, ECU_STATE_RAMP, 400), SM_TRANSITION);
+    EXPECT_EQ(ecu_sm_transition(&sm, ECU_STATE_RUN, 500), SM_TRANSITION);
+    EXPECT_EQ(ecu_sm_transition(&sm, ECU_STATE_COOLDOWN, 600), SM_TRANSITION);
+    EXPECT_EQ(ecu_sm_transition(&sm, ECU_STATE_SHUTDOWN, 700), SM_TRANSITION);
+    EXPECT_EQ(ecu_sm_transition(&sm, ECU_STATE_OFF, 800), SM_TRANSITION);
+}
+
+TEST(StateMachine, FaultToShutdown) {
+    ecu_sm_t sm;
+    ecu_sm_init(&sm);
+
+    ecu_sm_transition(&sm, ECU_STATE_PRESTART, 100);
+    ecu_sm_transition(&sm, ECU_STATE_SPINUP, 200);
+    ecu_sm_transition(&sm, ECU_STATE_FAULT, 300);
+
+    sm_result_t r = ecu_sm_transition(&sm, ECU_STATE_SHUTDOWN, 400);
+    EXPECT_EQ(r, SM_TRANSITION);
+    EXPECT_EQ(ecu_sm_state(&sm), ECU_STATE_SHUTDOWN);
+}
+
+TEST(StateMachine, StateNames) {
+    EXPECT_STREQ(ecu_sm_state_name(ECU_STATE_OFF), "OFF");
+    EXPECT_STREQ(ecu_sm_state_name(ECU_STATE_PRESTART), "PRESTART");
+    EXPECT_STREQ(ecu_sm_state_name(ECU_STATE_RAMP), "RAMP");
+    EXPECT_STREQ(ecu_sm_state_name(ECU_STATE_COOLDOWN), "COOLDOWN");
+    EXPECT_STREQ(ecu_sm_state_name(ECU_STATE_SHUTDOWN), "SHUTDOWN");
+    EXPECT_STREQ(ecu_sm_state_name(ECU_STATE_FAULT), "FAULT");
+}
+
+TEST(StateMachine, SameStateNoop) {
+    ecu_sm_t sm;
+    ecu_sm_init(&sm);
+    sm_result_t r = ecu_sm_transition(&sm, ECU_STATE_OFF, 100);
+    EXPECT_EQ(r, SM_NO_CHANGE);
+}

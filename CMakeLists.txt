@@ -98,7 +98,7 @@ macro(add_ecu_test name src)
     add_test(NAME ${name} COMMAND ${name})
 endmacro()
 
-add_ecu_test(test_sm test/test_sm.c)
+add_gtest_test(test_sm test/test_sm.cpp)
 add_ecu_test(test_sensor test/test_sensor.c)
 add_ecu_test(test_config test/test_config.c)
 add_ecu_test(test_pid test/test_pid.c)
