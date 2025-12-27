@@ -78,6 +78,20 @@ target_link_libraries(jetecu_sim ecu_core hal_posix)
 # Tests
 enable_testing()
 
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.14.0
+)
+FetchContent_MakeAvailable(googletest)
+
+macro(add_gtest_test name src)
+    add_executable(${name} ${src})
+    target_link_libraries(${name} ecu_cpp GTest::gtest_main)
+    add_test(NAME ${name} COMMAND ${name})
+endmacro()
+
 macro(add_ecu_test name src)
     add_executable(${name} ${src})
     target_link_libraries(${name} ecu_core)
