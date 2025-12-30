@@ -110,8 +110,8 @@ add_gtest_test(test_fuzz test/test_fuzz.cpp)
 add_gtest_test(test_perf test/test_perf.cpp)
 add_gtest_test(test_scheduler test/test_scheduler.cpp)
 
-add_executable(test_telemetry test/test_telemetry.c)
-target_link_libraries(test_telemetry ecu_telemetry)
+add_executable(test_telemetry test/test_telemetry.cpp)
+target_link_libraries(test_telemetry ecu_cpp ecu_telemetry GTest::gtest_main)
 add_test(NAME test_telemetry COMMAND test_telemetry)
 
 if(NOT CMAKE_BUILD_TYPE)
