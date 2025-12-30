@@ -92,12 +92,6 @@ macro(add_gtest_test name src)
     add_test(NAME ${name} COMMAND ${name})
 endmacro()
 
-macro(add_ecu_test name src)
-    add_executable(${name} ${src})
-    target_link_libraries(${name} ecu_core)
-    add_test(NAME ${name} COMMAND ${name})
-endmacro()
-
 add_gtest_test(test_sm test/test_sm.cpp)
 add_gtest_test(test_sensor test/test_sensor.cpp)
 add_gtest_test(test_config test/test_config.cpp)
