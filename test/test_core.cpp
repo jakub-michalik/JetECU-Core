@@ -123,3 +123,37 @@ TEST(Core, Overspeed) {
     step_n(&ecu, &in, 0.1f, 20);
     EXPECT_EQ(ecu_sm_state(&ecu.sm), ECU_STATE_FAULT);
 }
+
+/* ---- C++ wrapper tests ---- */
+
+#include "cpp/jetecu/Engine.h"
+
+TEST(EngineWrapper, DefaultConstruction) {
+    jetecu::Engine engine;
+    EXPECT_EQ(engine.state(), jetecu::State::Off);
+}
+
+TEST(EngineWrapper, StepReturnsOutputs) {
+    jetecu::Engine engine;
+    jetecu::Inputs in;
+    auto out = engine.step(in, 0.01f);
+    EXPECT_EQ(out.state, jetecu::State::Off);
+    EXPECT_NEAR(out.fuel_pct, 0.0f, 0.01f);
+}
+
+TEST(EngineWrapper, StartSequence) {
+    jetecu::Engine engine;
+    jetecu::Inputs in;
+    in.throttle = 50.0f;
+    in.rpm = 0;
+    in.egt = 25.0f;
+
+    engine.step(in, 0.01f);
+    engine.step(in, 0.01f);
+    EXPECT_EQ(engine.state(), jetecu::State::Spinup);
+}
+
+TEST(EngineWrapper, StateName) {
+    jetecu::Engine engine;
+    EXPECT_STREQ(engine.stateName(), "OFF");
+}
