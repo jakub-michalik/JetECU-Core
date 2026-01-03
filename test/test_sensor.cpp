@@ -72,3 +72,25 @@ TEST(Sensor, StuckDetection) {
         }
     }
 }
+
+/* ---- C++ wrapper tests ---- */
+
+#include "cpp/jetecu/Sensor.h"
+
+TEST(SensorWrapper, ValidReading) {
+    jetecu::Sensor sensor(0.0f, 1000.0f, 50.0f, 0.5f, 5);
+    auto r = sensor.validate(500.0f);
+    EXPECT_TRUE(r.valid);
+    EXPECT_EQ(r.faults, SENSOR_FAULT_NONE);
+}
+
+TEST(SensorWrapper, RangeFault) {
+    jetecu::Sensor sensor(0.0f, 1000.0f, 50.0f, 0.5f, 5);
+    auto r = sensor.validate(-10.0f);
+    EXPECT_FALSE(r.valid);
+    EXPECT_TRUE(r.faults & SENSOR_FAULT_RANGE);
+}
+
+TEST(SensorWrapper, EgtPlausible) {
+    EXPECT_TRUE(jetecu::Sensor::egtPlausible(600.0f, 80000.0f, 45000.0f));
+}

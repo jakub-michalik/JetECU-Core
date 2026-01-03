@@ -60,3 +60,29 @@ TEST(PID, Reset) {
     float out = ecu_pid_update(&pid, 10.0f, 10.0f, 0.01f);
     EXPECT_NEAR(out, 0.0f, 0.1f);
 }
+
+/* ---- C++ wrapper tests ---- */
+
+#include "cpp/jetecu/Pid.h"
+
+TEST(PidWrapper, ZeroError) {
+    jetecu::Pid pid(1.0f, 0.0f, 0.0f, -100, 100);
+    float out = pid.update(50.0f, 50.0f, 0.01f);
+    EXPECT_NEAR(out, 0.0f, 0.01f);
+}
+
+TEST(PidWrapper, Proportional) {
+    jetecu::Pid pid(2.0f, 0.0f, 0.0f, -100, 100);
+    float out = pid.update(50.0f, 40.0f, 0.01f);
+    EXPECT_NEAR(out, 20.0f, 0.1f);
+}
+
+TEST(PidWrapper, Reset) {
+    jetecu::Pid pid(1.0f, 1.0f, 0.0f, -100, 100);
+    for (int i = 0; i < 10; i++) {
+        pid.update(100.0f, 0.0f, 0.01f);
+    }
+    pid.reset();
+    float out = pid.update(10.0f, 10.0f, 0.01f);
+    EXPECT_NEAR(out, 0.0f, 0.1f);
+}

@@ -81,3 +81,39 @@ TEST(StateMachine, SameStateNoop) {
     sm_result_t r = ecu_sm_transition(&sm, ECU_STATE_OFF, 100);
     EXPECT_EQ(r, SM_NO_CHANGE);
 }
+
+/* ---- C++ wrapper tests ---- */
+
+#include "cpp/jetecu/StateMachine.h"
+
+TEST(StateMachineWrapper, Init) {
+    jetecu::StateMachine sm;
+    EXPECT_EQ(sm.state(), jetecu::State::Off);
+}
+
+TEST(StateMachineWrapper, Transition) {
+    jetecu::StateMachine sm;
+    EXPECT_TRUE(sm.transition(jetecu::State::Prestart, 100));
+    EXPECT_EQ(sm.state(), jetecu::State::Prestart);
+}
+
+TEST(StateMachineWrapper, InvalidTransition) {
+    jetecu::StateMachine sm;
+    EXPECT_FALSE(sm.transition(jetecu::State::Run, 100));
+    EXPECT_EQ(sm.state(), jetecu::State::Off);
+}
+
+TEST(StateMachineWrapper, Callbacks) {
+    jetecu::StateMachine sm;
+    jetecu::State entered = jetecu::State::Off;
+    jetecu::State exited = jetecu::State::Off;
+
+    sm.setCallbacks(
+        [&](jetecu::State s) { entered = s; },
+        [&](jetecu::State s) { exited = s; }
+    );
+
+    sm.transition(jetecu::State::Prestart, 100);
+    EXPECT_EQ(entered, jetecu::State::Prestart);
+    EXPECT_EQ(exited, jetecu::State::Off);
+}
