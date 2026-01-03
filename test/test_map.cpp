@@ -60,3 +60,26 @@ TEST(Map2D, Bilinear) {
     float center = ecu_map2d_lookup(&map, 50, 50);
     EXPECT_NEAR(center, 15.0f, 0.5f);
 }
+
+/* ---- C++ wrapper tests ---- */
+
+#include "cpp/jetecu/Map.h"
+
+TEST(Map1DWrapper, Lookup) {
+    jetecu::Map1D map({{0, 0}, {50, 25}, {100, 100}});
+    EXPECT_NEAR(map.lookup(0), 0.0f, 0.1f);
+    EXPECT_NEAR(map.lookup(50), 25.0f, 0.1f);
+    EXPECT_NEAR(map.lookup(100), 100.0f, 0.1f);
+}
+
+TEST(Map1DWrapper, Interpolation) {
+    jetecu::Map1D map({{0, 0}, {100, 200}});
+    EXPECT_NEAR(map.lookup(50), 100.0f, 0.1f);
+}
+
+TEST(Map2DWrapper, Lookup) {
+    jetecu::Map2D map({0, 100}, {0, 100},
+                      {{0, 10}, {20, 30}});
+    EXPECT_NEAR(map.lookup(0, 0), 0.0f, 0.1f);
+    EXPECT_NEAR(map.lookup(50, 50), 15.0f, 0.5f);
+}

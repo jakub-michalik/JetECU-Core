@@ -54,3 +54,28 @@ TEST(Scheduler, NoOverrun) {
 
     EXPECT_FALSE(ecu_sched_any_overrun(&sched));
 }
+
+/* ---- C++ wrapper tests ---- */
+
+#include "cpp/jetecu/Scheduler.h"
+
+TEST(SchedulerWrapper, AddAndTick) {
+    jetecu::Scheduler sched;
+    int counter = 0;
+
+    sched.add("test_task", [&]() { counter++; },
+              SCHED_PRIO_HIGH, 10);
+
+    sched.tick(0);
+    EXPECT_EQ(counter, 1);
+
+    sched.tick(10);
+    EXPECT_EQ(counter, 2);
+}
+
+TEST(SchedulerWrapper, NoOverrun) {
+    jetecu::Scheduler sched;
+    sched.add("fast", []() {}, SCHED_PRIO_HIGH, 10);
+    sched.tick(0);
+    EXPECT_FALSE(sched.anyOverrun());
+}

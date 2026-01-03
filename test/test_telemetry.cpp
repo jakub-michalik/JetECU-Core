@@ -80,3 +80,20 @@ TEST(Telemetry, EncodeTooLong) {
     int flen = tel_frame_encode(payload, TEL_MAX_PAYLOAD + 1, frame, sizeof(frame));
     EXPECT_EQ(flen, -1);
 }
+
+/* ---- C++ wrapper tests ---- */
+
+#include "cpp/jetecu/Telemetry.h"
+
+TEST(TelemetryWrapper, CRC16) {
+    uint8_t data[] = { 0x01, 0x02, 0x03 };
+    uint16_t crc = jetecu::Telemetry::crc16(data, 3);
+    EXPECT_NE(crc, 0u);
+    EXPECT_EQ(crc, jetecu::Telemetry::crc16(data, 3));
+}
+
+TEST(TelemetryWrapper, EncodeRoundtrip) {
+    uint8_t payload[] = { 0xAA, 0xBB, 0xCC };
+    auto frame = jetecu::Telemetry::encode(payload, 3);
+    EXPECT_EQ(frame.size(), 3u + TEL_FRAME_OVERHEAD);
+}

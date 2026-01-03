@@ -76,3 +76,23 @@ TEST(Fault, DegradeMode) {
     ecu_fault_clear(&mgr, 0x01);
     EXPECT_EQ(ecu_fault_get_action(&mgr), FAULT_ACTION_NONE);
 }
+
+/* ---- C++ wrapper tests ---- */
+
+#include "cpp/jetecu/FaultManager.h"
+
+TEST(FaultManagerWrapper, ReportAndClear) {
+    jetecu::FaultManager fm;
+    fm.report(0x01, FAULT_SEV_WARNING, FAULT_ACTION_NONE, 100);
+    EXPECT_EQ(fm.count(), 1);
+    EXPECT_TRUE(fm.isActive(0x01));
+
+    fm.clear(0x01);
+    EXPECT_EQ(fm.count(), 0);
+}
+
+TEST(FaultManagerWrapper, Action) {
+    jetecu::FaultManager fm;
+    fm.report(0x01, FAULT_SEV_WARNING, FAULT_ACTION_DEGRADE, 100);
+    EXPECT_EQ(fm.action(), FAULT_ACTION_DEGRADE);
+}
