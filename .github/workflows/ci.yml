@@ -49,7 +49,7 @@ jobs:
       - name: Install clang
         run: sudo apt-get update && sudo apt-get install -y clang
       - name: Configure
-        run: CC=clang cmake -B build -DCMAKE_BUILD_TYPE=Debug
+        run: CC=clang CXX=clang++ cmake -B build -DCMAKE_BUILD_TYPE=Debug
       - name: Build
         run: cmake --build build --parallel
       - name: Run all tests
@@ -64,6 +64,7 @@ jobs:
           cmake -B build
           -DCMAKE_BUILD_TYPE=Debug
           -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g"
+          -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g"
           -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
       - name: Build
         run: cmake --build build --parallel
@@ -84,6 +85,6 @@ jobs:
         run: cmake --build build --parallel
       - name: Run clang-tidy
         run: >
-          find core/ telemetry/ -name '*.c' |
+          find core/ telemetry/ cpp/ -name '*.c' -o -name '*.cpp' |
           xargs clang-tidy -p build --warnings-as-errors='bugprone-*'
         continue-on-error: true
