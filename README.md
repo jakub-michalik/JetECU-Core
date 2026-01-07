@@ -235,6 +235,53 @@ No dynamic memory allocation. Deterministic timing.
 - CI: GCC, Clang, sanitizers, clang-tidy
 - Architecture and fault documentation
 
+## C++ API
+
+The `cpp/jetecu/` directory provides modern C++17 wrappers around the C core:
+
+```cpp
+#include "cpp/jetecu/Engine.h"
+
+jetecu::Engine engine;
+jetecu::Inputs in;
+in.throttle = 80.0f;
+in.rpm = 50000.0f;
+in.egt = 600.0f;
+
+auto out = engine.step(in, 0.001f);
+printf("state=%s fuel=%.1f%%\n", engine.stateName(), out.fuel_pct);
+```
+
+Available wrapper classes:
+
+| Class | Wraps | Key Methods |
+|-------|-------|-------------|
+| `Engine` | `ecu_t` | `step()`, `state()`, `stateName()` |
+| `StateMachine` | `ecu_sm_t` | `transition()`, `setCallbacks()` |
+| `Pid` | `ecu_pid_t` | `update()`, `reset()` |
+| `Sensor` | `ecu_sensor_*` | `validate()`, `egtPlausible()` |
+| `FaultManager` | `ecu_fault_mgr_t` | `report()`, `clear()`, `isActive()` |
+| `Map1D` / `Map2D` | `ecu_map*_t` | `lookup()` with initializer_list construction |
+| `Scheduler` | `ecu_scheduler_t` | `add()` with `std::function`, `tick()` |
+| `Config` | `ecu_config_t` | `loadFile()`, `loadString()` |
+| `Telemetry` | `tel_ctx_t` | `sendStatus()`, `processByte()` |
+
+All wrappers expose `raw()` for direct access to the underlying C struct.
+
+### Testing with Google Test
+
+Tests use [Google Test](https://github.com/google/googletest) (fetched via CMake FetchContent):
+
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build --parallel
+cd build && ctest --output-on-failure
+```
+
+Each test suite covers both the C API directly and the C++ wrapper classes.
+
+---
+
 ## Next Steps
 
 1. Hardware testing on ESP32 and STM32
