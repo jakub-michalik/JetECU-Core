@@ -56,6 +56,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y clang-tidy
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Build
+        run: cmake --build build --parallel
       - name: Run clang-tidy
         run: >
           find core/ telemetry/ -name '*.c' |

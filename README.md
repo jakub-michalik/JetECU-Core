@@ -1,5 +1,7 @@
 # JetECU-Core
 
+[![CI](https://github.com/jakub-michalik/JetECU-Core/actions/workflows/ci.yml/badge.svg)](https://github.com/jakub-michalik/JetECU-Core/actions/workflows/ci.yml)
+
 Platform-independent Engine Control Unit for small jet (turbine) engines.
 
 ## Motivation
