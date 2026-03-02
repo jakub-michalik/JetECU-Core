@@ -15,8 +15,32 @@ jobs:
         run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
       - name: Build
         run: cmake --build build --parallel
-      - name: Test
-        run: cd build && ctest --output-on-failure
+      - name: "Test: State Machine"
+        run: cd build && ./test_sm
+      - name: "Test: Sensor Validation"
+        run: cd build && ./test_sensor
+      - name: "Test: Config Loading"
+        run: cd build && ./test_config
+      - name: "Test: PID Controller"
+        run: cd build && ./test_pid
+      - name: "Test: Fuel Scheduling"
+        run: cd build && ./test_fuel
+      - name: "Test: Core ECU Step"
+        run: cd build && ./test_core
+      - name: "Test: Lookup Maps"
+        run: cd build && ./test_map
+      - name: "Test: Fault Manager"
+        run: cd build && ./test_fault
+      - name: "Test: Fuzz"
+        run: cd build && ./test_fuzz
+      - name: "Test: Performance"
+        run: cd build && ./test_perf
+      - name: "Test: Scheduler"
+        run: cd build && ./test_scheduler
+      - name: "Test: Telemetry"
+        run: cd build && ./test_telemetry
+      - name: "Simulator Smoke Test"
+        run: cd build && ./jetecu_sim -d 5 -q
 
   build-clang:
     runs-on: ubuntu-latest
@@ -28,7 +52,7 @@ jobs:
         run: CC=clang cmake -B build -DCMAKE_BUILD_TYPE=Debug
       - name: Build
         run: cmake --build build --parallel
-      - name: Test
+      - name: Run all tests
         run: cd build && ctest --output-on-failure
 
   sanitizers:
@@ -43,7 +67,7 @@ jobs:
           -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
       - name: Build
         run: cmake --build build --parallel
-      - name: Test
+      - name: Run all tests
         run: cd build && ctest --output-on-failure
       - name: Simulator smoke test
         run: cd build && ./jetecu_sim -d 5 -q
