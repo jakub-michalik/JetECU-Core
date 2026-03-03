@@ -1,5 +1,7 @@
 #include "cpp/jetecu/Scheduler.h"
 
+#include <cassert>
+
 namespace jetecu {
 
 Scheduler::Scheduler()
@@ -12,8 +14,10 @@ int Scheduler::add(const std::string &name, std::function<void()> fn,
 {
     if (binding_count_ >= kMaxTasks) return -1;
     bindings_[binding_count_].fn = std::move(fn);
-    int result = ecu_sched_add(&sched_, name.c_str(), trampoline,
-                               &bindings_[binding_count_], prio, interval_ms);
+    bindings_[binding_count_].name = name;
+    int result = ecu_sched_add(&sched_, bindings_[binding_count_].name.c_str(),
+                               trampoline, &bindings_[binding_count_],
+                               prio, interval_ms);
     binding_count_++;
     return result;
 }
@@ -31,6 +35,22 @@ bool Scheduler::anyOverrun() const
 uint32_t Scheduler::wcet(int task_idx) const
 {
     return ecu_sched_get_wcet(&sched_, task_idx);
+}
+
+int Scheduler::taskCount() const
+{
+    return sched_.task_count;
+}
+
+TaskInfo Scheduler::taskInfo(int idx) const
+{
+    assert(idx >= 0 && idx < sched_.task_count);
+    return TaskInfo::from(sched_.tasks[idx]);
+}
+
+TaskRange Scheduler::tasks() const
+{
+    return TaskRange(sched_.tasks, sched_.task_count);
 }
 
 void Scheduler::trampoline(void *ctx)

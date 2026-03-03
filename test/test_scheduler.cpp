@@ -79,3 +79,40 @@ TEST(SchedulerWrapper, NoOverrun) {
     sched.tick(0);
     EXPECT_FALSE(sched.anyOverrun());
 }
+
+TEST(SchedulerWrapper, TaskCount) {
+    jetecu::Scheduler sched;
+    EXPECT_EQ(sched.taskCount(), 0);
+
+    sched.add("a", []() {}, SCHED_PRIO_HIGH, 10);
+    EXPECT_EQ(sched.taskCount(), 1);
+
+    sched.add("b", []() {}, SCHED_PRIO_LOW, 20);
+    EXPECT_EQ(sched.taskCount(), 2);
+}
+
+TEST(SchedulerWrapper, TaskInfo) {
+    jetecu::Scheduler sched;
+    sched.add("ctrl_loop", []() {}, SCHED_PRIO_CRITICAL, 5);
+    sched.tick(0);
+
+    auto info = sched.taskInfo(0);
+    EXPECT_STREQ(info.name, "ctrl_loop");
+    EXPECT_EQ(info.priority, SCHED_PRIO_CRITICAL);
+    EXPECT_EQ(info.interval_ms, 5u);
+    EXPECT_EQ(info.run_count, 1u);
+    EXPECT_FALSE(info.overrun);
+}
+
+TEST(SchedulerWrapper, IterateTasks) {
+    jetecu::Scheduler sched;
+    sched.add("alpha", []() {}, SCHED_PRIO_HIGH, 10);
+    sched.add("beta", []() {}, SCHED_PRIO_LOW, 20);
+
+    int count = 0;
+    for (auto task : sched.tasks()) {
+        EXPECT_NE(task.name, nullptr);
+        count++;
+    }
+    EXPECT_EQ(count, 2);
+}

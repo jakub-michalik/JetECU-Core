@@ -22,6 +22,17 @@ float Map1D::lookup(float x) const
     return ecu_map1d_lookup(&map_, x);
 }
 
+Point Map1D::point(int i) const
+{
+    assert(i >= 0 && i < map_.count);
+    return {map_.x[i], map_.y[i]};
+}
+
+PointRange Map1D::points() const
+{
+    return PointRange(map_.x, map_.y, map_.count);
+}
+
 Map2D::Map2D(std::initializer_list<float> row_keys,
              std::initializer_list<float> col_keys,
              std::initializer_list<std::initializer_list<float>> values)

@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef JETECU_TYPES_H
 #define JETECU_TYPES_H
 

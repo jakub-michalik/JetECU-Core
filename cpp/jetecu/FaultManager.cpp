@@ -43,4 +43,42 @@ void FaultManager::setRetries(uint16_t code, uint8_t max_retries)
     ecu_fault_set_retries(&mgr_, code, max_retries);
 }
 
+ActiveFaultRange FaultManager::activeFaults() const
+{
+    return ActiveFaultRange(mgr_.active, mgr_.active_count);
+}
+
+LogRange FaultManager::log() const
+{
+    int entries = mgr_.log_count < FAULT_LOG_SIZE
+                      ? mgr_.log_count : FAULT_LOG_SIZE;
+    return LogRange(mgr_.log, entries);
+}
+
+int FaultManager::logCount() const
+{
+    return mgr_.log_count;
+}
+
+const char *FaultManager::severityName(ecu_fault_severity_t sev)
+{
+    switch (sev) {
+    case FAULT_SEV_INFO:     return "INFO";
+    case FAULT_SEV_WARNING:  return "WARNING";
+    case FAULT_SEV_CRITICAL: return "CRITICAL";
+    case FAULT_SEV_FATAL:    return "FATAL";
+    }
+    return "UNKNOWN";
+}
+
+const char *FaultManager::actionName(ecu_fault_action_t act)
+{
+    switch (act) {
+    case FAULT_ACTION_NONE:     return "NONE";
+    case FAULT_ACTION_DEGRADE:  return "DEGRADE";
+    case FAULT_ACTION_SHUTDOWN: return "SHUTDOWN";
+    }
+    return "UNKNOWN";
+}
+
 } // namespace jetecu

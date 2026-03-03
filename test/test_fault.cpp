@@ -96,3 +96,49 @@ TEST(FaultManagerWrapper, Action) {
     fm.report(0x01, FAULT_SEV_WARNING, FAULT_ACTION_DEGRADE, 100);
     EXPECT_EQ(fm.action(), FAULT_ACTION_DEGRADE);
 }
+
+TEST(FaultManagerWrapper, IterateActiveFaults) {
+    jetecu::FaultManager fm;
+    fm.report(0x01, FAULT_SEV_WARNING, FAULT_ACTION_NONE, 100);
+    fm.report(0x02, FAULT_SEV_CRITICAL, FAULT_ACTION_SHUTDOWN, 200);
+
+    int count = 0;
+    bool found_01 = false, found_02 = false;
+    for (auto f : fm.activeFaults()) {
+        if (f.code == 0x01) found_01 = true;
+        if (f.code == 0x02) found_02 = true;
+        EXPECT_TRUE(f.active);
+        count++;
+    }
+    EXPECT_EQ(count, 2);
+    EXPECT_TRUE(found_01);
+    EXPECT_TRUE(found_02);
+}
+
+TEST(FaultManagerWrapper, IterateLog) {
+    jetecu::FaultManager fm;
+    fm.report(0x01, FAULT_SEV_WARNING, FAULT_ACTION_NONE, 100);
+    fm.report(0x02, FAULT_SEV_INFO, FAULT_ACTION_NONE, 200);
+
+    EXPECT_GE(fm.logCount(), 2);
+
+    int count = 0;
+    for (auto entry : fm.log()) {
+        (void)entry;
+        count++;
+    }
+    EXPECT_GE(count, 2);
+}
+
+TEST(FaultManagerWrapper, SeverityName) {
+    EXPECT_STREQ(jetecu::FaultManager::severityName(FAULT_SEV_INFO), "INFO");
+    EXPECT_STREQ(jetecu::FaultManager::severityName(FAULT_SEV_WARNING), "WARNING");
+    EXPECT_STREQ(jetecu::FaultManager::severityName(FAULT_SEV_CRITICAL), "CRITICAL");
+    EXPECT_STREQ(jetecu::FaultManager::severityName(FAULT_SEV_FATAL), "FATAL");
+}
+
+TEST(FaultManagerWrapper, ActionName) {
+    EXPECT_STREQ(jetecu::FaultManager::actionName(FAULT_ACTION_NONE), "NONE");
+    EXPECT_STREQ(jetecu::FaultManager::actionName(FAULT_ACTION_DEGRADE), "DEGRADE");
+    EXPECT_STREQ(jetecu::FaultManager::actionName(FAULT_ACTION_SHUTDOWN), "SHUTDOWN");
+}

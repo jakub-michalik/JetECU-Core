@@ -1,0 +1,11 @@
+# C++ wrapper headers are C++, not C
+cpp/jetecu/*.h linguist-language=C++
+
+# HAL interface headers are consumed by C++ layer
+hal/*.h linguist-language=C++
+
+# Platform HAL stubs are vendored (excluded from language stats)
+platform/** linguist-vendored
+
+# Simulator is vendored test infrastructure
+sim/** linguist-vendored

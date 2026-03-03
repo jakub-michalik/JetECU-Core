@@ -58,6 +58,7 @@ add_library(ecu_cpp
     cpp/jetecu/StateMachine.cpp
     cpp/jetecu/Pid.cpp
     cpp/jetecu/Sensor.cpp
+    cpp/jetecu/Fuel.cpp
     cpp/jetecu/FaultManager.cpp
     cpp/jetecu/Map.cpp
     cpp/jetecu/Scheduler.cpp

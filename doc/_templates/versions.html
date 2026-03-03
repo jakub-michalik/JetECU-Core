@@ -1,0 +1,28 @@
+{# Version selector widget — injected into the RTD sidebar.
+   CI populates defined_versions via html_context when building
+   multi-version docs.  Falls back to a single "latest" entry. #}
+{% if defined_versions is defined %}
+<div class="rst-versions" data-toggle="rst-versions" role="note"
+     aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"></span>
+    v: {{ version }}
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Versions</dt>
+      {% for v in defined_versions %}
+      <dd><a href="{{ defined_versions[v] }}">{{ v }}</a></dd>
+      {% endfor %}
+    </dl>
+  </div>
+</div>
+{% else %}
+<div class="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version">
+    <span class="fa fa-book"></span>
+    v: {{ version }} (latest)
+  </span>
+</div>
+{% endif %}

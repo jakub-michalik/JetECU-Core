@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef JETECU_SENSOR_H
 #define JETECU_SENSOR_H
 

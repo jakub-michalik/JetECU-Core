@@ -83,3 +83,49 @@ TEST(Map2DWrapper, Lookup) {
     EXPECT_NEAR(map.lookup(0, 0), 0.0f, 0.1f);
     EXPECT_NEAR(map.lookup(50, 50), 15.0f, 0.5f);
 }
+
+TEST(Map1DWrapper, OperatorCall) {
+    jetecu::Map1D map({{0, 0}, {100, 200}});
+    EXPECT_NEAR(map(50), 100.0f, 0.1f);
+    EXPECT_NEAR(map(0), 0.0f, 0.1f);
+}
+
+TEST(Map1DWrapper, SizeAndPoint) {
+    jetecu::Map1D map({{0, 0}, {50, 25}, {100, 100}});
+    EXPECT_EQ(map.size(), 3);
+
+    auto p = map.point(1);
+    EXPECT_NEAR(p.x, 50.0f, 0.1f);
+    EXPECT_NEAR(p.y, 25.0f, 0.1f);
+}
+
+TEST(Map1DWrapper, IteratePoints) {
+    jetecu::Map1D map({{0, 0}, {50, 25}, {100, 100}});
+
+    int count = 0;
+    for (auto pt : map.points()) {
+        if (count == 0) {
+            EXPECT_NEAR(pt.x, 0.0f, 0.1f);
+            EXPECT_NEAR(pt.y, 0.0f, 0.1f);
+        } else if (count == 1) {
+            EXPECT_NEAR(pt.x, 50.0f, 0.1f);
+            EXPECT_NEAR(pt.y, 25.0f, 0.1f);
+        }
+        count++;
+    }
+    EXPECT_EQ(count, 3);
+}
+
+TEST(Map2DWrapper, OperatorCall) {
+    jetecu::Map2D map({0, 100}, {0, 100},
+                      {{0, 10}, {20, 30}});
+    EXPECT_NEAR(map(0, 0), 0.0f, 0.1f);
+    EXPECT_NEAR(map(50, 50), 15.0f, 0.5f);
+}
+
+TEST(Map2DWrapper, RowsCols) {
+    jetecu::Map2D map({0, 50, 100}, {0, 100},
+                      {{0, 10}, {5, 15}, {20, 30}});
+    EXPECT_EQ(map.rows(), 3);
+    EXPECT_EQ(map.cols(), 2);
+}

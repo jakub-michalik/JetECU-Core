@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef JETECU_ENGINE_H
 #define JETECU_ENGINE_H
 

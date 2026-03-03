@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef JETECU_STATE_MACHINE_H
 #define JETECU_STATE_MACHINE_H
 

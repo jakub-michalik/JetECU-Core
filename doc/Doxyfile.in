@@ -1,0 +1,34 @@
+# Doxygen configuration for JetECU-Core
+# Generates XML consumed by Sphinx + Breathe
+
+PROJECT_NAME           = "JetECU-Core"
+PROJECT_BRIEF          = "Platform-independent jet engine control unit"
+
+# Input
+INPUT                  = ../core ../telemetry
+FILE_PATTERNS          = *.h
+RECURSIVE              = YES
+
+# Output — XML only (Breathe reads this)
+GENERATE_XML           = YES
+XML_OUTPUT             = _doxygen_output/xml
+GENERATE_HTML          = NO
+GENERATE_LATEX         = NO
+
+# Extraction
+EXTRACT_ALL            = NO
+EXTRACT_STATIC         = YES
+
+# Preprocessing
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = NO
+PREDEFINED             = __attribute__(x)=
+
+# Warnings
+WARN_IF_UNDOCUMENTED   = YES
+WARN_NO_PARAMDOC       = YES
+
+# Misc
+QUIET                  = YES
+OUTPUT_DIRECTORY       =

@@ -74,8 +74,8 @@ TEST(Telemetry, DecodeGarbagePrefix) {
 }
 
 TEST(Telemetry, EncodeTooLong) {
-    uint8_t payload[TEL_MAX_PAYLOAD + 1];
-    uint8_t frame[TEL_MAX_FRAME + 10];
+    uint8_t payload[TEL_MAX_PAYLOAD + 1] = {};
+    uint8_t frame[TEL_MAX_FRAME + 10] = {};
 
     int flen = tel_frame_encode(payload, TEL_MAX_PAYLOAD + 1, frame, sizeof(frame));
     EXPECT_EQ(flen, -1);

@@ -1,8 +1,11 @@
 # JetECU-Core
 
 [![CI](https://github.com/jakub-michalik/JetECU-Core/actions/workflows/ci.yml/badge.svg)](https://github.com/jakub-michalik/JetECU-Core/actions/workflows/ci.yml)
+[![Docs](https://github.com/jakub-michalik/JetECU-Core/actions/workflows/docs.yml/badge.svg)](https://jakub-michalik.github.io/JetECU-Core/)
 
 Platform-independent Engine Control Unit for small jet (turbine) engines.
+
+**[Read the documentation](https://jakub-michalik.github.io/JetECU-Core/)**
 
 ## Motivation
 
@@ -65,6 +68,44 @@ ESP32/Arduino, STM32 (HAL/LL), POSIX simulator, Teensy, Linux SBC.
 
 **D) Telemetry + Comms** — structured protocol, not `Serial.println`.
 UART / CAN / USB transport, binary framing (CBOR), CRC + versioning, host ↔ ECU commands, timestamped error log.
+
+---
+
+## Why C and C++
+
+JetECU-Core uses a deliberate two-language architecture. The split follows a simple rule: everything that might run on a microcontroller is C; everything that exists purely for developer convenience is C++.
+
+### Written in C (C11)
+
+| Layer | Directory | Reason |
+|-------|-----------|--------|
+| Core ECU logic | `core/` | State machine, PID, fuel scheduling, sensor validation, fault manager, scheduler, config, lookup maps |
+| HAL interfaces | `hal/` | Abstract hardware API (GPIO, ADC, PWM, UART, timers, watchdog, NVRAM, CAN) |
+| Platform ports | `platform/` | Concrete HAL implementations for STM32, ESP32, and POSIX simulator |
+| Telemetry | `telemetry/` | Binary framing protocol and transmission |
+| Simulator | `sim/` | PC-based engine model and CSV replay |
+
+**Why C for all of the above:**
+- **Portability** — compiles on every embedded toolchain without fuss. No name mangling, no ABI surprises.
+- **Zero runtime overhead** — no vtables, exceptions, or RTTI. Critical for a 1 kHz control loop on a Cortex-M4.
+- **No heap allocation** — all core structures are fixed-size. Deterministic memory usage is a hard requirement.
+- **Certification path** — C is the standard language for safety-critical and avionics software (DO-178C, MISRA). Starting in C keeps that door open.
+- **Tooling** — static analyzers, MISRA checkers, and formal verification tools have the deepest C support.
+
+### Written in C++ (C++17)
+
+| Layer | Directory | Reason |
+|-------|-----------|--------|
+| Wrapper classes | `cpp/jetecu/` | `Engine`, `Pid`, `Sensor`, `Fuel`, `FaultManager`, `Map1D`/`Map2D`, `Scheduler`, `Config`, `Telemetry`, `StateMachine` |
+| Test suites | `test/` | Unit, integration, fuzz, and performance tests using Google Test |
+
+**Why C++ for the above:**
+- **RAII** — resource-safe patterns like `Fuel::CutoffGuard` that guarantee cleanup even if something goes wrong.
+- **Ergonomics** — `std::function` callbacks, initializer-list construction for maps, range-based iteration over scheduler tasks.
+- **Google Test** — the test framework is C++; writing tests in C++ gives access to `EXPECT_*` / `ASSERT_*` macros and fixtures.
+- **Optional layer** — the C++ wrappers are never required. Embedded targets can link `ecu_core` directly and skip C++ entirely.
+
+Every C++ wrapper holds its C struct by value and exposes it via `raw()` — composition, not inheritance. The core has zero knowledge of whether C++ wrappers exist.
 
 ---
 

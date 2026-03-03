@@ -1,0 +1,29 @@
+/* JetECU-Core docs — custom theme overrides */
+
+/* Slightly wider content area */
+.wy-nav-content {
+    max-width: 960px;
+}
+
+/* Tighten table cell padding */
+.rst-content table.docutils td,
+.rst-content table.docutils th {
+    padding: 6px 10px;
+}
+
+/* Code block font size */
+.rst-content .highlight pre {
+    font-size: 0.85em;
+    line-height: 1.45;
+}
+
+/* Breathe struct/enum member descriptions */
+.rst-content dl.c dd,
+.rst-content dl.cpp dd {
+    margin-left: 2em;
+}
+
+/* Version selector tweaks */
+.rst-versions {
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
