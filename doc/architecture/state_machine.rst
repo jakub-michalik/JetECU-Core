@@ -8,53 +8,31 @@ safe exit paths.
 State Transition Diagram
 ------------------------
 
-.. code-block:: text
+.. mermaid::
 
-                       +-------+
-                       |  OFF  |<---------+
-                       +---+---+          |
-                           |              |
-                      throttle > 5%       |
-                           |              |
-                       +---v---+          |
-                       |PRESTART|         |
-                       +---+---+          |
-                           |              |
-                     sensors OK           |
-                           |              |
-                       +---v---+      +---+----+
-                       | SPINUP|----->|SHUTDOWN|
-                       +---+---+      +--------+
-                           |              ^
-                     RPM > 30% idle       |
-                           |              |
-                       +---v----+     +---+---+
-                       |IGNITION|---->| FAULT |
-                       +---+----+     +-------+
-                           |              ^
-                     EGT > start_min      |
-                           |              |
-                       +---v---+          |
-                       | RAMP  |----------+
-                       +---+---+     (overspeed/
-                           |          overtemp)
-                     RPM > 95% target     |
-                           |              |
-                       +---v---+          |
-                       |  RUN  |----------+
-                       +---+---+
-                           |
-                     throttle < 1%
-                           |
-                       +---v----+
-                       |COOLDOWN|
-                       +---+----+
-                           |
-                     EGT < 100C
-                           |
-                       +---v----+
-                       |SHUTDOWN|
-                       +--------+
+   stateDiagram-v2
+       [*] --> OFF
+       OFF --> PRESTART: throttle > 5%
+       PRESTART --> SPINUP: sensors OK
+       SPINUP --> IGNITION: RPM > 30% idle
+       IGNITION --> RAMP: EGT > start_min
+       RAMP --> RUN: RPM > 95% target
+       RUN --> COOLDOWN: throttle < 1%
+       COOLDOWN --> SHUTDOWN: EGT < 100 &deg;C
+       SHUTDOWN --> OFF
+
+       PRESTART --> FAULT: timeout / sensor invalid
+       SPINUP   --> FAULT: timeout
+       IGNITION --> FAULT: timeout / no light-off
+       RAMP     --> FAULT: overspeed / overtemp
+       RUN      --> FAULT: overspeed / overtemp / sensor fail
+       FAULT    --> SHUTDOWN: safe shutdown
+
+       note right of FAULT
+           Latched fault.
+           Severity governs whether
+           the engine can be restarted.
+       end note
 
 States
 ------

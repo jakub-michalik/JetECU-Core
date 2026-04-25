@@ -7,27 +7,78 @@ JetECU-Core is a platform-independent engine control unit for small jet
 Layer Diagram
 -------------
 
-.. code-block:: text
+.. mermaid::
 
-   +-----------------------------+
-   |     Application (main)      |
-   +-----------------------------+
-   |    Scheduler (ecu_sched)    |
-   +-----------------------------+
-   |    Telemetry (tel_frame)    |
-   +-----------------------------+
-   |       Core ECU Logic        |
-   |  ecu_core  ecu_sm  ecu_pid |
-   |  ecu_fuel  ecu_sensor      |
-   |  ecu_fault ecu_map          |
-   +-----------------------------+
-   |    HAL (hardware abstract)  |
-   |  ADC GPIO PWM Timer NVRAM   |
-   |  Watchdog UART CAN          |
-   +-----------------------------+
-   |    Platform Port            |
-   |  POSIX / ESP32 / STM32     |
-   +-----------------------------+
+   flowchart TB
+       App["Application (main)"]
+       Sched["Scheduler<br/>(ecu_sched)"]
+       Tel["Telemetry<br/>(tel_frame, tel_send)"]
+       subgraph Core["Core ECU Logic"]
+           direction LR
+           ECU["ecu_core"]
+           SM["ecu_sm"]
+           PID["ecu_pid"]
+           Fuel["ecu_fuel"]
+           Sens["ecu_sensor"]
+           Flt["ecu_fault"]
+           Map["ecu_map"]
+       end
+       subgraph HAL["HAL (hardware abstraction)"]
+           direction LR
+           ADC["ADC"]
+           GPIO["GPIO"]
+           PWM["PWM"]
+           Timer["Timer"]
+           NVRAM["NVRAM"]
+           WDT["Watchdog"]
+           UART["UART"]
+           CAN["CAN"]
+       end
+       subgraph Plat["Platform Port"]
+           direction LR
+           POSIX["POSIX (sim)"]
+           ESP32["ESP32"]
+           STM32["STM32F4"]
+       end
+
+       App --> Sched
+       Sched --> Tel
+       Sched --> Core
+       Tel --> HAL
+       Core --> HAL
+       HAL --> Plat
+
+       classDef core fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
+       classDef hal  fill:#fff3e0,stroke:#ef6c00,stroke-width:1px;
+       classDef plat fill:#f3e5f5,stroke:#6a1b9a,stroke-width:1px;
+       class Core,ECU,SM,PID,Fuel,Sens,Flt,Map core;
+       class HAL,ADC,GPIO,PWM,Timer,NVRAM,WDT,UART,CAN hal;
+       class Plat,POSIX,ESP32,STM32 plat;
+
+Module Dependencies
+-------------------
+
+The ECU step function orchestrates the core modules each control tick.
+Solid arrows show data flow within a single 1 kHz tick.
+
+.. mermaid::
+
+   flowchart LR
+       Sensors[/"Raw ADC samples"/] --> ecu_sensor
+       ecu_sensor -->|"validated RPM/EGT/throttle"| ecu_core
+       ecu_core --> ecu_sm
+       ecu_sm -->|"requested fuel %"| ecu_pid
+       ecu_map -->|"feed-forward<br/>fuel schedule"| ecu_pid
+       ecu_pid -->|"valve command"| ecu_fuel
+       ecu_fuel --> PWM[/"PWM duty"/]
+       ecu_sensor -.->|"out-of-range"| ecu_fault
+       ecu_sm -.->|"timeout"| ecu_fault
+       ecu_fault -.->|"degrade/shutdown"| ecu_sm
+       ecu_core -->|"snapshot"| tel_send
+       tel_send --> UART[/"UART / CAN"/]
+
+       classDef io fill:#eeeeee,stroke:#666,stroke-dasharray:3 3;
+       class Sensors,PWM,UART io;
 
 Layers
 ------

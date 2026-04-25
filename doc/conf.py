@@ -19,7 +19,20 @@ extensions = [
     "breathe",
     "sphinx_rtd_theme",
     "sphinx_copybutton",
+    "sphinxcontrib.mermaid",
 ]
+
+# -- Mermaid configuration ---------------------------------------------------
+
+mermaid_version = "10.9.0"
+mermaid_init_js = (
+    "mermaid.initialize({"
+    "startOnLoad: true,"
+    "theme: 'default',"
+    "flowchart: {curve: 'basis', useMaxWidth: true},"
+    "sequence: {useMaxWidth: true},"
+    "});"
+)
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "_doxygen_output"]

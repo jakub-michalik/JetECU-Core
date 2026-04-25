@@ -9,6 +9,35 @@ reporting, latching, retry policies, and degrade mode support.
 
    catalogue
 
+Decision Flow
+-------------
+
+When a module reports a fault via :c:func:`ecu_fault_report`, the manager
+routes it through severity, latch, and retry checks before deciding on
+the system action.
+
+.. mermaid::
+
+   flowchart TD
+       Start([ecu_fault_report]) --> Sev{Severity?}
+       Sev -->|Info| Log[Append to log]
+       Sev -->|Warning| Degrade[Enter degrade mode]
+       Sev -->|Critical| Retry{Retries left?}
+       Sev -->|Fatal| Halt[Latch &amp; force SHUTDOWN]
+       Retry -->|yes| Recover[Decrement retry counter<br/>attempt recovery]
+       Retry -->|no| Halt
+       Degrade --> Cleared{Condition cleared?}
+       Cleared -->|yes| Log
+       Cleared -->|no| Degrade
+       Log --> Telemetry[Notify host via tel_send]
+       Halt --> Telemetry
+       Recover --> Telemetry
+
+       classDef warn fill:#fff8e1,stroke:#f9a825;
+       classDef crit fill:#ffebee,stroke:#c62828;
+       class Degrade,Cleared warn;
+       class Halt,Retry crit;
+
 Severity Levels
 ---------------
 
