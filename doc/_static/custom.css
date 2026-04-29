@@ -27,3 +27,53 @@
 .rst-versions {
     border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
+
+/* ---------------------------------------------------------------------
+ * Mermaid diagram readability
+ *
+ * The RTD theme injects colors on <span> elements inside SVG that wash
+ * out Mermaid labels.  Force readable defaults so node and edge text
+ * stay legible regardless of the surrounding theme.
+ * --------------------------------------------------------------------- */
+
+div.mermaid {
+    background: #ffffff;
+    text-align: center;
+    margin: 1em 0;
+    padding: 0.5em;
+    overflow-x: auto;
+}
+
+/* Node text */
+div.mermaid .nodeLabel,
+div.mermaid .nodeLabel p,
+div.mermaid .label foreignObject div,
+div.mermaid text.actor > tspan,
+div.mermaid .messageText {
+    color: #212121 !important;
+    fill: #212121 !important;
+    background: transparent !important;
+    font-weight: 500;
+}
+
+/* Edge labels - white pill on top of the line */
+div.mermaid .edgeLabel,
+div.mermaid .edgeLabel p,
+div.mermaid .edgeLabel rect {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #212121 !important;
+    fill: #212121 !important;
+    padding: 1px 4px;
+}
+
+div.mermaid .edgeLabel rect {
+    fill: #ffffff !important;
+}
+
+/* Cluster (subgraph) labels */
+div.mermaid .cluster text,
+div.mermaid .cluster span {
+    fill: #212121 !important;
+    color: #212121 !important;
+}

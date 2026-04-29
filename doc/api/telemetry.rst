@@ -19,9 +19,9 @@ and a CRC-16/CCITT trailer.
        PL --> CH["CRC_HI"]
        CH --> CL["CRC_LO"]
 
-       classDef hdr fill:#e3f2fd,stroke:#1976d2;
-       classDef pay fill:#fff3e0,stroke:#ef6c00;
-       classDef crc fill:#e8f5e9,stroke:#2e7d32;
+       classDef hdr fill:#e3f2fd,stroke:#1976d2,color:#0d47a1;
+       classDef pay fill:#fff3e0,stroke:#ef6c00,color:#e65100;
+       classDef crc fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20;
        class S1,S2,LH,LL hdr;
        class PL pay;
        class CH,CL crc;

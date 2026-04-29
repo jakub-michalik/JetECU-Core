@@ -33,8 +33,8 @@ the system action.
        Halt --> Telemetry
        Recover --> Telemetry
 
-       classDef warn fill:#fff8e1,stroke:#f9a825;
-       classDef crit fill:#ffebee,stroke:#c62828;
+       classDef warn fill:#fff8e1,stroke:#f9a825,color:#5d4037;
+       classDef crit fill:#ffebee,stroke:#c62828,color:#b71c1c;
        class Degrade,Cleared warn;
        class Halt,Retry crit;
 

@@ -48,9 +48,9 @@ Layer Diagram
        Core --> HAL
        HAL --> Plat
 
-       classDef core fill:#e3f2fd,stroke:#1976d2,stroke-width:1px;
-       classDef hal  fill:#fff3e0,stroke:#ef6c00,stroke-width:1px;
-       classDef plat fill:#f3e5f5,stroke:#6a1b9a,stroke-width:1px;
+       classDef core fill:#e3f2fd,stroke:#1976d2,stroke-width:1px,color:#0d47a1;
+       classDef hal  fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,color:#e65100;
+       classDef plat fill:#f3e5f5,stroke:#6a1b9a,stroke-width:1px,color:#4a148c;
        class Core,ECU,SM,PID,Fuel,Sens,Flt,Map core;
        class HAL,ADC,GPIO,PWM,Timer,NVRAM,WDT,UART,CAN hal;
        class Plat,POSIX,ESP32,STM32 plat;
@@ -77,7 +77,7 @@ Solid arrows show data flow within a single 1 kHz tick.
        ecu_core -->|"snapshot"| tel_send
        tel_send --> UART[/"UART / CAN"/]
 
-       classDef io fill:#eeeeee,stroke:#666,stroke-dasharray:3 3;
+       classDef io fill:#eeeeee,stroke:#666,stroke-dasharray:3 3,color:#212121;
        class Sensors,PWM,UART io;
 
 Layers
