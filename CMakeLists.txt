@@ -28,6 +28,7 @@ add_library(ecu_core
     core/ecu_map.c
     core/ecu_fault.c
     core/ecu_scheduler.c
+    core/ecu_dsp.c
 )
 target_include_directories(ecu_core PUBLIC ${CMAKE_SOURCE_DIR})
 
@@ -104,6 +105,7 @@ add_gtest_test(test_fault test/test_fault.cpp)
 add_gtest_test(test_fuzz test/test_fuzz.cpp)
 add_gtest_test(test_perf test/test_perf.cpp)
 add_gtest_test(test_scheduler test/test_scheduler.cpp)
+add_gtest_test(test_dsp test/test_dsp.cpp)
 
 add_executable(test_telemetry test/test_telemetry.cpp)
 target_link_libraries(test_telemetry ecu_cpp ecu_telemetry GTest::gtest_main)

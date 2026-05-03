@@ -10,6 +10,7 @@ Auto-generated from Doxygen annotations in the C headers via
    core
    state_machine
    sensor
+   dsp
    pid
    fuel
    fault

@@ -39,6 +39,8 @@ jobs:
         run: cd build && ./test_scheduler
       - name: "Test: Telemetry"
         run: cd build && ./test_telemetry
+      - name: "Test: DSP"
+        run: cd build && ./test_dsp
       - name: "Simulator Smoke Test"
         run: cd build && ./jetecu_sim -d 5 -q
 
