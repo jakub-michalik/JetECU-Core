@@ -40,7 +40,7 @@ periodic status frames from the ECU.
        participant Tel as tel_send / tel_frame
        participant ECU as ecu_core
 
-       loop every 50 ms
+       loop every 20 ms (50 Hz)
            ECU->>Tel: status snapshot
            Tel-->>Host: STATUS frame (CRC ok)
        end

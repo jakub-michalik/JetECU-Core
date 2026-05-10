@@ -7,34 +7,70 @@ Task Timing
 -----------
 
 Tasks are registered with a period (ms) and run in priority order.
-The diagram below shows one second of nominal execution for the four
-canonical task rates.
+The diagram below shows a representative **100 ms slice** of nominal
+execution; the 1 Hz housekeeping task (fault-log flush, NVRAM sync)
+is not captured at this zoom level — it fires once per second outside
+the window.
 
 .. mermaid::
 
    gantt
-       title Scheduler tick activity (1 s window, 1 kHz base rate)
+       title Scheduler activity over a 100 ms slice
        dateFormat  X
        axisFormat  %L ms
 
        section 1 kHz control
-       sm + pid + fuel        :active, ctrl1, 0,    250
-       sm + pid + fuel        :active, ctrl2, 250,  500
-       sm + pid + fuel        :active, ctrl3, 500,  750
-       sm + pid + fuel        :active, ctrl4, 750,  1000
+       sm + pid + fuel - 100 x 1 ms ticks :active, ctrl, 0, 100
 
        section 100 Hz sensors
-       sensor validation      :sens1, 0,    100
-       sensor validation      :sens2, 200,  300
-       sensor validation      :sens3, 500,  600
-       sensor validation      :sens4, 800,  900
+       validate :s1,  0,  1
+       validate :s2,  10, 11
+       validate :s3,  20, 21
+       validate :s4,  30, 31
+       validate :s5,  40, 41
+       validate :s6,  50, 51
+       validate :s7,  60, 61
+       validate :s8,  70, 71
+       validate :s9,  80, 81
+       validate :s10, 90, 91
 
-       section 20 Hz telemetry
-       tel_send_status        :tel1, 0,    50
-       tel_send_status        :tel2, 500,  550
+       section 50 Hz telemetry
+       tel_send_status :t1, 0,  2
+       tel_send_status :t2, 20, 22
+       tel_send_status :t3, 40, 42
+       tel_send_status :t4, 60, 62
+       tel_send_status :t5, 80, 82
 
-       section 1 Hz housekeeping
-       fault log flush        :crit, hk1, 0,    20
+Canonical task rates:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 15 20 40
+
+   * - Task
+     - Period
+     - Frequency
+     - Notes
+   * - Control loop (SM + PID + fuel)
+     - 1 ms
+     - 1 kHz
+     - Hard-real-time; budget 800 us per tick.
+   * - Sensor validation
+     - 10 ms
+     - 100 Hz
+     - Range / rate / stuck-at checks downstream of DSP.
+   * - Telemetry TX (``tel_send_status``)
+     - 20 ms
+     - 50 Hz
+     - Periodic status frame to host.
+   * - Watchdog kick
+     - 100 ms
+     - 10 Hz
+     - Independent of control-loop overruns.
+   * - Housekeeping (fault flush, NVRAM)
+     - 1 s
+     - 1 Hz
+     - Low-priority background work.
 
 WCET Overrun Path
 -----------------
