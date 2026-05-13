@@ -35,26 +35,54 @@ JetECU-Core is designed to fill that gap from day one.
 
 ## Architecture Overview
 
+### System Context
+
+How JetECU-Core sits between the operator, the engine, and the host PC:
+
+```mermaid
+flowchart LR
+    Op([Operator /<br/>Host PC]):::ext -->|throttle, commands| ECU{{JetECU-Core}}:::ecu
+    Sensors[/"RPM, EGT,<br/>throttle, battery"/]:::ext --> ECU
+    ECU -->|fuel valve PWM| Engine([Jet engine]):::ext
+    ECU -->|igniter, starter| Engine
+    Engine --> Sensors
+    ECU -->|telemetry frames<br/>50 Hz| Op
+
+    classDef ecu fill:#1976d2,stroke:#0d47a1,color:#fff,font-weight:bold
+    classDef ext fill:#eceff1,stroke:#546e7a,color:#263238
+```
+
 ### Layered Design
 
-```
-┌─────────────────────────────────┐
-│        Application / UI         │
-├─────────────────────────────────┤
-│     Telemetry + Comms Layer     │
-│   (UART / CAN / USB / CBOR)    │
-├─────────────────────────────────┤
-│        Core ECU Logic           │
-│  State Machine · PID · Faults   │
-│  Fuel Scheduling · Rate Limit   │
-├─────────────────────────────────┤
-│    HAL (Hardware Abstraction)   │
-│  ADC · GPIO · PWM · Timers     │
-│  NVRAM · Watchdog               │
-├─────────────────────────────────┤
-│        Platform Ports           │
-│  ESP32 · STM32 · POSIX · ...   │
-└─────────────────────────────────┘
+```mermaid
+flowchart TB
+    App["Application (main loop)"]:::app
+    Sched["Scheduler<br/><i>1 kHz / 100 Hz / 50 Hz / 1 Hz tasks</i>"]:::core
+    Tel["Telemetry<br/><i>tel_frame · tel_send · CRC-16</i>"]:::core
+    subgraph CoreLogic["Core ECU Logic"]
+        direction LR
+        SM["state machine"]:::core
+        PID["PID"]:::core
+        Fuel["fuel"]:::core
+        DSP["DSP<br/><i>biquad · notch · median</i>"]:::core
+        Sens["sensor<br/>validation"]:::core
+        Flt["faults"]:::core
+        Map["lookup<br/>maps"]:::core
+    end
+    HAL["HAL<br/><i>ADC · GPIO · PWM · UART · CAN · timers · NVRAM · watchdog</i>"]:::hal
+    Plat["Platform port<br/><i>POSIX sim · STM32F4 · ESP32</i>"]:::plat
+
+    App --> Sched
+    Sched --> Tel
+    Sched --> CoreLogic
+    Tel --> HAL
+    CoreLogic --> HAL
+    HAL --> Plat
+
+    classDef app  fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+    classDef core fill:#e3f2fd,stroke:#1976d2,color:#0d47a1
+    classDef hal  fill:#fff3e0,stroke:#ef6c00,color:#e65100
+    classDef plat fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
 ```
 
 **A) Core ECU Logic** — platform-independent C, no hardware calls.
